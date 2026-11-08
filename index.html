@@ -1,9 +1,19 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth dark">
+<html lang="es" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotoKeeper Supreme Spec - Telemetría & Notificaciones Push Pro</title>
+ <meta charset="UTF-8">
+    <!-- Viewport adaptado con viewport-fit=cover para iPhone Notch/Dynamic Island -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MotoKeeper Supreme Spec - Telemetría & Notificaciones Push</title>
+    
+    <!-- Meta etiquetas para visualización nativa en iOS (iPhone) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MotoKeeper">
+    
+    <!-- Meta etiquetas para Android / Chrome -->
+    <meta name="theme-color" content="#07090e">
+    <meta name="mobile-web-app-capable" content="yes">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -37,115 +47,355 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Ajustes globales de compatibilidad táctil e iOS Safe Areas */
+        :root {
+            --sat: env(safe-area-inset-top);
+            --sab: env(safe-area-inset-bottom);
+        }
+        
+        html, body {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #07090e; 
+            color: #f3f4f6;
+            padding-top: var(--sat);
+            padding-bottom: var(--sab);
+        }
+
+        .blueprint-grid {
+            background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .hotspot-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 240, 255, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+        }
+
+        /* Scroll suave táctil para listas y pestañas en iPhone y Android */
+        .custom-scrollbar {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Evita que los inputs hagan zoom automático molesto en iPhone Safari */
+        @media screen and (-webkit-min-device-pixel-ratio:0) {
+            select, textarea, input {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+    <script>
+        // ==========================================
+// SISTEMA DE CONTROL DE LICENCIAS & KEYGEN SECRETO
+// ==========================================
+
+// Licencias iniciales y persistentes con expiración en epoch timestamp
+function getStoredLicenses() {
+    const stored = localStorage.getItem('motokeeper_license_db');
+    if (stored) return JSON.parse(stored);
+    
+    // Licencias base iniciales (activas por defecto por 10 años)
+    const tenYears = Date.now() + (10 * 365 * 24 * 60 * 60 * 1000);
+    const initial = {
+        "MK-SUPREME-2026-TRIAL": tenYears,
+        "MK-PRO-9982-X771": tenYears,
+        "MK-DEV-0000-TEST": tenYears
+    };
+    localStorage.setItem('motokeeper_license_db', JSON.stringify(initial));
+    return initial;
+}
+
+function checkLicenseOnLoad() {
+    const isActivated = localStorage.getItem('motokeeper_activated');
+    const activeSerial = localStorage.getItem('motokeeper_active_serial');
+    const db = getStoredLicenses();
+
+    if (isActivated === 'true' && activeSerial && db[activeSerial]) {
+        if (Date.now() < db[activeSerial]) {
+            document.getElementById('activationScreen').classList.add('hidden');
+            return;
+        }
+    }
+    // Si venció o no está activado
+    localStorage.removeItem('motokeeper_activated');
+    localStorage.removeItem('motokeeper_active_serial');
+    document.getElementById('activationScreen').classList.remove('hidden');
+}
+
+function validateLicense(e) {
+    e.preventDefault();
+    const inputVal = document.getElementById('licenseInput').value.trim().toUpperCase();
+    const errorBox = document.getElementById('licenseError');
+    const db = getStoredLicenses();
+
+    if (db[inputVal] && Date.now() < db[inputVal]) {
+        localStorage.setItem('motokeeper_activated', 'true');
+        localStorage.setItem('motokeeper_active_serial', inputVal);
+        errorBox.classList.add('hidden');
+        document.getElementById('activationScreen').classList.add('hidden');
+    } else {
+        errorBox.innerText = db[inputVal] ? "Esta clave de licencia ya expiró." : "Clave de licencia no válida o inexistente.";
+        errorBox.classList.remove('hidden');
+    }
+}
+
+function lockSystem() {
+    localStorage.removeItem('motokeeper_activated');
+    localStorage.removeItem('motokeeper_active_serial');
+    document.getElementById('activationScreen').classList.remove('hidden');
+    document.getElementById('licenseInput').value = '';
+}
+
+// PANEL SECRETO & GENERADOR (KEYGEN)
+function openSecretPanel() {
+    const pin = prompt("Ingrese el código de acceso máster:");
+    if (pin === "220306") {
+        document.getElementById('secretPanelModal').classList.remove('hidden');
+        document.getElementById('generatedOutput').classList.add('hidden');
+    } else if (pin !== null) {
+        alert("Código de seguridad incorrecto.");
+    }
+}
+
+function closeSecretPanel() {
+    document.getElementById('secretPanelModal').classList.add('hidden');
+}
+
+function generateNewLicense(e) {
+    e.preventDefault();
+    const months = parseInt(document.getElementById('licenseMonths').value);
+    
+    // Generar formato MK-XXXX-XXXX-XXXX
+    const randomHex = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+    const newSerial = `MK-${randomHex()}-${randomHex()}-${months}M`;
+    
+    // Calcular tiempo de expiración
+    const expDate = new Date();
+    expDate.setMonth(expDate.getMonth() + months);
+    
+    // Guardar en la base de datos local
+    const db = getStoredLicenses();
+    db[newSerial] = expDate.getTime();
+    localStorage.setItem('motokeeper_license_db', JSON.stringify(db));
+
+    // Mostrar en pantalla
+    document.getElementById('newLicenseKey').innerText = newSerial;
+    document.getElementById('licenseExpDetail').innerText = `Válida por ${months} mes(es) hasta: ${expDate.toLocaleDateString()}`;
+    document.getElementById('generatedOutput').classList.remove('hidden');
+}
+
+function copyGeneratedLicense() {
+    const key = document.getElementById('newLicenseKey').innerText;
+    navigator.clipboard.writeText(key);
+    alert("¡Clave de licencia copiada al portapapeles!");
+}
+        // ==========================================
+// SISTEMA DE CONTROL DE LICENCIA Y SESIÓN
+// ==========================================
+const validLicenses = [
+    "MK-SUPREME-2026-TRIAL",
+    "MK-PRO-9982-X771",
+    "MK-DEV-0000-TEST"
+];
+
+function checkLicenseOnLoad() {
+    const isActivated = localStorage.getItem('motokeeper_activated');
+    if (isActivated === 'true') {
+        document.getElementById('activationScreen').classList.add('hidden');
+    } else {
+        document.getElementById('activationScreen').classList.remove('hidden');
+    }
+}
+
+function validateLicense(e) {
+    e.preventDefault();
+    const inputVal = document.getElementById('licenseInput').value.trim().toUpperCase();
+    const errorBox = document.getElementById('licenseError');
+
+    if (validLicenses.includes(inputVal)) {
+        localStorage.setItem('motokeeper_activated', 'true');
+        localStorage.setItem('motokeeper_active_serial', inputVal);
+        errorBox.classList.add('hidden');
+        document.getElementById('activationScreen').classList.add('hidden');
+    } else {
+        errorBox.classList.remove('hidden');
+    }
+}
+
+function autofillDemoLicense() {
+    document.getElementById('licenseInput').value = "MK-SUPREME-2026-TRIAL";
+    document.getElementById('licenseError').classList.add('hidden');
+}
+
+function lockSystem() {
+    localStorage.removeItem('motokeeper_activated');
+    document.getElementById('activationScreen').classList.remove('hidden');
+    document.getElementById('licenseInput').value = '';
+}
+window.onload = function() {
+    checkLicenseOnLoad();
+    renderApp();
+};
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            accent: '#00f0ff'
+                        },
+                        darkbg: '#07090e',
+                        cardbg: '#0f172a',
+                        cardborder: '#1e293b'
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #07090e; color: #f3f4f6; }
         .blueprint-grid {
-            background-image: linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
-            background-size: 24px 24px;
+            background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
         .hotspot-pulse {
             animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
         @keyframes pulse-ring {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7); }
-            70% { transform: scale(1.15); box-shadow: 0 0 0 12px rgba(0, 240, 255, 0); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 240, 255, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
         }
-        .glow-effect { box-shadow: 0 0 50px -10px rgba(249, 115, 22, 0.25); }
-        .glow-accent { box-shadow: 0 0 40px -10px rgba(0, 240, 255, 0.2); }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ea580c; }
     </style>
 </head>
-<body class="bg-darkbg text-gray-200 antialiased selection:bg-brand-500 selection:text-white flex flex-col min-h-screen">
+<body class="min-h-screen bg-darkbg text-gray-200 antialiased flex flex-col selection:bg-brand-500 selection:text-white">
 
-    <!-- Navbar -->
-    <nav class="bg-cardbg/80 backdrop-blur-md border-b border-cardborder fixed top-0 w-full z-50">
+    <!-- PANTALLA DE ACTIVACIÓN DE LICENCIA (BLOQUEO INICIAL) -->
+<div id="activationScreen" class="fixed inset-0 z-50 bg-darkbg blueprint-grid flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-cardbg/95 border border-cardborder backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden" style="box-shadow: 0 0 35px -5px rgba(0, 240, 255, 0.2);">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl"></div>
+        
+        <div class="text-center space-y-3">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-brand-600 via-amber-500 to-brand-accent flex items-center justify-center shadow-lg shadow-brand-600/30">
+                <i class="fa-solid fa-key text-gray-950 text-2xl font-bold"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-extrabold text-white tracking-tight">Activación de Licencia</h2>
+                <p class="text-xs text-brand-accent font-mono mt-1">MOTOKEEPER SUPREME v4.0</p>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">
+                Ingresa tu clave de producto autorizada para desbloquear el panel de telemetría, gestión y alertas proactivas.
+            </p>
+        </div>
+
+        <!-- Formulario de Validación de Clave -->
+        <form onsubmit="validateLicense(event)" class="space-y-4">
+            <div>
+                <label class="block text-[11px] font-mono text-gray-400 uppercase tracking-wider mb-2">Clave de Licencia (Serial)</label>
+                <div class="relative">
+                    <input type="text" id="licenseInput" placeholder="MK-XXXX-XXXX-XXXX" required
+                        class="w-full bg-darkbg border border-cardborder rounded-xl px-4 py-3 text-center text-sm font-mono font-bold tracking-widest text-brand-accent focus:border-brand-accent outline-none uppercase transition">
+                    <i class="fa-solid fa-lock absolute right-3.5 top-3.5 text-gray-600 text-sm"></i>
+                </div>
+            </div>
+
+            <div id="licenseError" class="hidden bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-xl p-3 text-center font-mono">
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Clave de licencia no válida o expirada.
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-500 hover:to-amber-400 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg shadow-brand-600/30 transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-shield-check text-sm"></i>
+                <span>VALIDAR Y ACTIVAR SISTEMA</span>
+            </button>
+        </form>
+
+               <p class="text-[10px] text-center text-gray-500 font-mono">
+            Protegido por protocolos de seguridad empresariales.
+        </p>
+    </div>
+</div>
+    <!-- Header Navigation -->
+    <header class="bg-cardbg/90 backdrop-blur-md border-b border-cardborder sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-600/30">
-                        <i class="fa-solid fa-bell text-white text-xl"></i>
-                    </div>
-                    <div>
-                        <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-brand-500 bg-clip-text text-transparent">MotoKeeper</span>
-                        <span class="text-[10px] text-brand-accent font-mono font-bold px-2 py-0.5 rounded bg-brand-accent/10 border border-brand-accent/20 ml-2">SUPREME v4.0</span>
-                    </div>
-                </div>
-                <div class="hidden md:flex items-center space-x-8 text-xs font-mono font-semibold uppercase tracking-wider text-gray-400">
-                    <a href="#features" class="hover:text-brand-accent transition">Características</a>
-                    <a href="#app-demo" class="hover:text-brand-accent transition">Telemetría Live</a>
-                    <a href="#benefits" class="hover:text-brand-accent transition">Beneficios</a>
-                    <a href="#faq" class="hover:text-brand-accent transition">FAQ</a>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <!-- Trial badge -->
-                    <div class="hidden sm:flex items-center space-x-1.5 bg-brand-500/10 border border-brand-500/30 text-brand-500 text-xs font-mono px-3 py-1.5 rounded-xl">
-                        <i class="fa-solid fa-bolt text-xs"></i>
-                        <span id="trialMovesBadge">Prueba: 0/6 Movimientos</span>
-                    </div>
-                    <button id="notifyBtn" onclick="requestNotificationPermission()" class="flex items-center space-x-2 bg-brand-accent/10 hover:bg-brand-accent/20 border border-brand-accent/30 text-brand-accent text-xs font-mono px-3 py-2 rounded-xl transition">
+                   
+                                   </div>
+                <!-- LOGOTIPO INTERACTIVO PARA PANEL SECRETO -->
+<div onclick="openSecretPanel()" class="flex items-center space-x-3 cursor-pointer select-none group" title="MotoKeeper System">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-600/30 group-hover:scale-105 transition-transform">
+        <i class="fa-solid fa-bell text-white text-xl"></i>
+    </div>
+    <div>
+        <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-brand-500 bg-clip-text text-transparent">MotoKeeper</span>
+        <span class="text-[10px] text-brand-accent font-mono font-bold px-2 py-0.5 rounded bg-brand-accent/10 border border-brand-accent/20 ml-2">SUPREME v4.0</span>
+    </div>
+</div>
+
+                    <!-- Notifications Button -->
+                    <button id="notifyBtn" onclick="requestNotificationPermission()" class="flex items-center space-x-2 bg-brand-accent/10 hover:bg-brand-accent/20 border border-brand-accent/30 text-brand-accent text-xs font-mono px-3 py-2 rounded-lg transition">
                         <i id="notifyIcon" class="fa-solid fa-bell"></i>
-                        <span id="notifyStatusText" class="hidden sm:inline">Push</span>
+                        <span id="notifyStatusText" class="hidden sm:inline">Activar Notificaciones</span>
                     </button>
-                    <a href="#app-demo" class="bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-500 hover:to-amber-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/25 transition">
-                        Probar Sistema
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Hero Section -->
-    <section class="relative pt-28 pb-16 overflow-hidden blueprint-grid">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center max-w-3xl mx-auto space-y-6">
-                <div class="inline-flex items-center space-x-2 bg-brand-500/10 border border-brand-500/30 text-brand-500 px-4 py-1.5 rounded-full text-xs font-mono font-semibold">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>Telemetría Proactiva & Notificaciones Push Nativas</span>
-                </div>
-                <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-                    El sistema definitivo para <span class="bg-gradient-to-r from-brand-500 via-amber-400 to-brand-accent bg-clip-text text-transparent">monitorear y proteger</span> tu moto.
-                </h1>
-                <p class="text-base sm:text-lg text-gray-400 leading-relaxed">
-                    Lleva el control de componentes clave, aceite, legalidad SOAT, consumo de combustible y recibe alertas directas en la pantalla de bloqueo de tu dispositivo.
-                </p>
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-                    <a href="#app-demo" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-xl shadow-brand-600/30 transition flex items-center justify-center space-x-2">
-                        <span>Lanzar Dashboard Interactivo</span>
-                        <i class="fa-solid fa-arrow-right text-xs"></i>
-                    </a>
-                    <button onclick="requestNotificationPermission()" class="w-full sm:w-auto bg-cardbg hover:bg-cardborder border border-cardborder text-gray-300 font-semibold text-sm px-8 py-3.5 rounded-xl transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-mobile-screen-button text-brand-accent"></i>
-                        <span>Activar Alertas Celular</span>
+                    <button onclick="openOdometerModal()" class="flex items-center space-x-2 bg-cardborder/60 hover:bg-cardborder text-xs font-mono font-medium px-3 py-2 rounded-lg transition border border-gray-700/50 text-gray-300">
+                        <i class="fa-solid fa-gauge-high text-brand-500"></i>
+                        <span>ODO: <strong id="headerOdoText" class="text-white">0 km</strong></span>
+                    </button>
+                    <!-- Botón para volver a bloquear el sistema -->
+<button onclick="lockSystem()" class="bg-cardborder/60 hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-cardborder text-xs p-2.5 rounded-lg transition" title="Bloquear Sistema (Cerrar Sesión)">
+    <i class="fa-solid fa-power-off"></i>
+</button>
+
+                    <button onclick="openServiceModal()" class="flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition shadow-lg shadow-brand-600/30">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="hidden sm:inline">Nuevo Registro</span>
                     </button>
                 </div>
             </div>
         </div>
-    </section>
+    </header>
 
-    <!-- App Live Interactive Container -->
-    <section id="app-demo" class="py-6 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-
-        <!-- TRIAL COUNTER BANNER -->
-        <div class="bg-gradient-to-r from-brand-600/20 via-cardbg to-amber-500/10 border border-brand-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 flex-shrink-0">
-                    <i class="fa-solid fa-key text-base"></i>
-                </div>
-                <div>
-                    <h4 class="text-xs sm:text-sm font-bold text-white">Modo de Evaluación Demostrativo</h4>
-                    <p class="text-[11px] text-gray-400">Puedes probar hasta <strong class="text-brand-accent">6 movimientos</strong> interactivos antes de activar tu licencia.</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
-                <span id="trialMovesText" class="text-xs font-mono font-bold text-brand-500 bg-darkbg/80 border border-brand-500/30 px-3 py-1.5 rounded-xl">0 / 6 Movimientos Usados</span>
-                <button onclick="showLicenseModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition shadow">Activar Licencia</button>
-            </div>
-        </div>
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         <!-- ROTATING TECH TIPS BANNER -->
         <div class="bg-gradient-to-r from-gray-900 via-cardbg to-gray-900 border border-brand-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
@@ -197,8 +447,8 @@
                 <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
                         <span class="text-[10px] text-gray-400 block font-mono">ESTADO GENERAL</span>
-                        <span class="text-xs font-bold text-emerald-400 mt-1 inline-block px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">ÓPTIMO</span>
-                        <p class="text-[10px] text-gray-500 mt-1">Telemetría Activa</p>
+                        <span class="text-xs font-bold text-emerald-400 mt-1 inline-block px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">NUEVO</span>
+                        <p class="text-[10px] text-gray-500 mt-1">Sin registros</p>
                     </div>
                     <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
                         <span class="text-[10px] text-gray-400 block font-mono">PRÓX. ACEITE</span>
@@ -211,7 +461,7 @@
                         <p class="text-[10px] text-gray-500">Sin registrar</p>
                     </div>
                     <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
-                        <span class="text-[10px] text-gray-400 block font-mono">RENDIMIENTO</span>
+                        <span class="text-[10px] text-gray-400 block font-mono">RENDIMIENTO PROMEDIO</span>
                         <span class="text-sm font-bold text-white font-mono mt-0.5 block" id="avgFuelHeader">0 km/gal</span>
                         <p class="text-[10px] text-gray-500">Sin tanqueos</p>
                     </div>
@@ -227,7 +477,7 @@
             </button>
             <button onclick="switchTab('notifications')" id="tab-notifications" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
                 <i class="fa-solid fa-bell font-bold text-brand-accent"></i>
-                <span>Alertas & Push</span>
+                <span>Alertas & Notificaciones</span>
             </button>
             <button onclick="switchTab('analytics')" id="tab-analytics" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
                 <i class="fa-solid fa-chart-line"></i>
@@ -239,7 +489,7 @@
             </button>
             <button onclick="switchTab('documents')" id="tab-documents" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
                 <i class="fa-solid fa-folder-closed"></i>
-                <span>Documentos Legales</span>
+                <span>Documentos & Legales</span>
             </button>
             <button onclick="switchTab('expenses')" id="tab-expenses" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
                 <i class="fa-solid fa-gas-pump"></i>
@@ -250,6 +500,52 @@
                 <span>Chequeo Pre-Ruta</span>
             </button>
         </div>
+        <!-- MODAL PANEL SECRETO GENERADOR DE LICENCIAS -->
+<div id="secretPanelModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-cardbg border border-brand-accent/30 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-5" style="box-shadow: 0 0 35px -5px rgba(0, 240, 255, 0.25);">
+        <button onclick="closeSecretPanel()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        
+        <div class="flex items-center space-x-3 border-b border-cardborder pb-4">
+            <div class="w-10 h-10 rounded-xl bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent">
+                <i class="fa-solid fa-user-gear text-lg"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-white">Panel de Administración de Licencias</h3>
+                <span class="text-[10px] font-mono text-brand-accent">KEYGEN MASTER • SEGURIDAD 220306</span>
+            </div>
+        </div>
+
+        <form onsubmit="generateNewLicense(event)" class="space-y-4 text-xs">
+            <div>
+                <label class="block text-gray-400 mb-1 font-mono">DURACIÓN EN MESES</label>
+                <select id="licenseMonths" class="w-full bg-darkbg border border-cardborder rounded-xl p-3 text-white font-mono outline-none focus:border-brand-accent">
+                    <option value="1">1 Mes (30 días)</option>
+                    <option value="3">3 Meses (90 días)</option>
+                    <option value="6">6 Meses (180 días)</option>
+                    <option value="12">12 Meses (1 Año)</option>
+                    <option value="24">24 Meses (2 Años)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-brand-accent hover:bg-cyan-400 text-gray-950 font-bold py-3 rounded-xl transition font-mono flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>GENERAR LICENCIA 100% FUNCIONAL</span>
+            </button>
+        </form>
+
+        <!-- Resultado de la generación -->
+        <div id="generatedOutput" class="hidden bg-darkbg border border-emerald-500/30 rounded-2xl p-4 space-y-2">
+            <span class="text-[10px] font-mono text-emerald-400 font-bold block uppercase tracking-wider">¡Licencia Creada con Éxito!</span>
+            <div class="flex items-center justify-between bg-cardbg p-3 rounded-xl border border-cardborder">
+                <code id="newLicenseKey" class="text-sm font-mono font-extrabold text-brand-accent select-all">MK-XXXX-XXXX-XXXX</code>
+                <button onclick="copyGeneratedLicense()" class="text-xs text-gray-400 hover:text-white px-2 py-1 rounded bg-darkbg border border-cardborder">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+            </div>
+            <p id="licenseExpDetail" class="text-[10px] font-mono text-gray-400 text-center"></p>
+        </div>
+    </div>
+</div>
 
         <!-- TAB 1: BLUEPRINT & COMPONENTES CLAVE -->
         <div id="sec-blueprint" class="space-y-6">
@@ -312,7 +608,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: ALERTAS & NOTIFICACIONES PUSH -->
+        <!-- TAB 2: ALERTAS & NOTIFICACIONES PUSH REDISEÑADAS -->
         <div id="sec-notifications" class="space-y-6 hidden">
             <div class="bg-cardbg border border-cardborder rounded-2xl p-6 shadow-xl space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cardborder pb-5">
@@ -321,7 +617,7 @@
                             <i class="fa-solid fa-mobile-screen-button text-brand-accent"></i>
                             <span>Notificaciones Push al Celular y Dispositivo</span>
                         </h2>
-                        <p class="text-xs text-gray-400 mt-1">Autoriza los permisos del sistema para recibir alertas preventivas directamente en tu teléfono.</p>
+                        <p class="text-xs text-gray-400 mt-1">Autoriza los permisos del sistema para recibir alertas preventivas directamente en la pantalla de bloqueo de tu dispositivo.</p>
                     </div>
 
                     <div class="flex items-center space-x-3">
@@ -407,7 +703,7 @@
                         <span>Estado de Componentes Clave</span>
                     </h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="componentsGrid"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="componentsGrid"></div>
             </div>
 
             <div class="bg-cardbg border border-cardborder rounded-2xl overflow-hidden shadow-lg">
@@ -442,7 +738,7 @@
                 </div>
                 <button onclick="openDocModal()" class="bg-brand-600 hover:bg-brand-500 text-white text-xs px-3.5 py-2 rounded-lg font-medium transition">Actualizar Documento</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="documentsGrid"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="documentsGrid"></div>
         </div>
 
         <!-- TAB 6: GASTOS Y COMBUSTIBLE -->
@@ -516,141 +812,14 @@
             </div>
         </div>
 
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-20 bg-darkbg border-t border-cardborder">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
-                <h2 class="text-xs font-mono font-bold text-brand-accent tracking-widest uppercase">Módulos Avanzados</h2>
-                <h3 class="text-3xl font-extrabold text-white">Ingeniería Digital para el Cuidado Motociclístico</h3>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-cardbg border border-cardborder p-6 rounded-2xl space-y-4 hover:border-brand-500/40 transition">
-                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500">
-                        <i class="fa-solid fa-mobile-screen-button text-xl"></i>
-                    </div>
-                    <h4 class="text-lg font-bold text-white">Notificaciones Push Nativas</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">
-                        Sistema integrado de alertas push que avisa directamente en la pantalla de bloqueo cuando tu moto alcanza intervalos críticos de servicio.
-                    </p>
-                </div>
-                <div class="bg-cardbg border border-cardborder p-6 rounded-2xl space-y-4 hover:border-brand-accent/40 transition">
-                    <div class="w-12 h-12 rounded-xl bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent">
-                        <i class="fa-solid fa-chart-line text-xl"></i>
-                    </div>
-                    <h4 class="text-lg font-bold text-white">Telemetría de Eficiencia</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">
-                        Analítica visual mediante Chart.js para monitorear el rendimiento en km/galón por cada tanqueada y controlar costos operativos.
-                    </p>
-                </div>
-                <div class="bg-cardbg border border-cardborder p-6 rounded-2xl space-y-4 hover:border-amber-500/40 transition">
-                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                        <i class="fa-solid fa-lightbulb text-xl"></i>
-                    </div>
-                    <h4 class="text-lg font-bold text-white">Base de 100 Conseils Técnicos</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">
-                        Motor dinámico de recomendaciones de seguridad vial, desgaste de neumáticos, fricción de frenos y lubricación sintética.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Benefits / Callout -->
-    <section id="benefits" class="py-16 bg-cardbg/30 border-t border-cardborder">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-gradient-to-r from-gray-900 via-cardbg to-gray-900 border border-brand-500/30 rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 glow-effect">
-                <div class="space-y-4 text-center lg:text-left">
-                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white">¿Listo para controlar tu motocicleta profesionalmente?</h3>
-                    <p class="text-sm text-gray-400 max-w-xl">
-                        Tus datos se guardan de forma local en tu navegador con total privacidad y sincronización inmediata.
-                    </p>
-                </div>
-                <button onclick="showLicenseModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm px-8 py-4 rounded-xl shadow-xl transition whitespace-nowrap">
-                    Activar Licencia Completa
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="py-20 bg-darkbg border-t border-cardborder">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <div class="text-center space-y-2">
-                <h2 class="text-xs font-mono font-bold text-brand-accent tracking-widest uppercase">Preguntas Frecuentes</h2>
-                <h3 class="text-2xl font-bold text-white">Respuestas Rápidas</h3>
-            </div>
-            <div class="space-y-4">
-                <div class="bg-cardbg border border-cardborder rounded-xl p-5 space-y-2">
-                    <h4 class="font-bold text-white text-sm">¿Cómo funcionan las Notificaciones Push en el teléfono?</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">
-                        Al presionar "Permitir en mi Teléfono", tu navegador autoriza a MotoKeeper a emitir alertas nativas directamente en tu celular o pantalla de escritorio.
-                    </p>
-                </div>
-                <div class="bg-cardbg border border-cardborder rounded-xl p-5 space-y-2">
-                    <h4 class="font-bold text-white text-sm">¿Mis datos de mantenimiento están seguros?</h4>
-                    <p class="text-xs text-gray-400 leading-relaxed">
-                        Sí, todos tus registros de tanqueos, odómetro y repuestos se almacenan localmente en el dispositivo (LocalStorage), garantizando velocidad e independencia de conexión.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-cardbg/80 border-t border-cardborder py-12 text-center text-xs text-gray-500 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-            <div class="flex justify-center space-x-6 text-gray-400 font-mono text-[11px]">
-                <a href="#features" class="hover:text-white">Características</a>
-                <a href="#app-demo" class="hover:text-white">Telemetría</a>
-                <a href="#benefits" class="hover:text-white">Beneficios</a>
-                <a href="#faq" class="hover:text-white">FAQ</a>
-            </div>
-            <p>© 2026 MotoKeeper Supreme Spec • Sistema Proactivo de Telemetría y Mantenimiento Motociclístico.</p>
-        </div>
+    <footer class="bg-cardbg/40 border-t border-cardborder py-6 mt-12 text-center text-xs text-gray-500">
+        <p>© 2026 MotoKeeper Supreme Spec • Sistema Proactivo de Telemetría y Mantenimiento</p>
     </footer>
 
-    <!-- MODAL DE ACTIVACIÓN DE LICENCIA (POPUP AL CUMPLIR 6 MOVIMIENTOS) -->
-    <div id="licensePaywallModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center hidden p-4">
-        <div class="bg-cardbg border-2 border-brand-500 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6 glow-effect text-center">
-            <div class="absolute -top-12 -right-12 w-36 h-36 bg-brand-500/10 rounded-full blur-2xl"></div>
-            
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 mx-auto flex items-center justify-center shadow-lg shadow-brand-600/30">
-                <i class="fa-solid fa-lock text-white text-2xl"></i>
-            </div>
-
-            <div class="space-y-2">
-                <span class="text-[10px] font-mono text-brand-accent font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-brand-accent/10 border border-brand-accent/20">PRUEBA DE EVALUACIÓN FINALIZADA</span>
-                <h3 class="text-2xl font-extrabold text-white">¡Has completado tus 6 movimientos de prueba!</h3>
-                <p class="text-xs text-gray-400 leading-relaxed max-w-md mx-auto">
-                    Has experimentado el poder de telemetría, notificaciones push y mantenimiento proactivo de MotoKeeper Supreme. Para desbloquear uso ilimitado en tu moto, activa tu licencia oficial.
-                </p>
-            </div>
-
-            <div class="bg-darkbg/80 border border-cardborder rounded-2xl p-4 text-left space-y-2">
-                <h4 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Tu Licencia MotoKeeper Pro Incluye:</h4>
-                <ul class="text-xs text-gray-300 space-y-1.5 font-medium">
-                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Registros y movimientos ilimitados</span></li>
-                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Notificaciones push al celular sin restricción</span></li>
-                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Módulos de telemetría y gráficos interactivos</span></li>
-                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Actualizaciones y soporte técnico garantizado</span></li>
-                </ul>
-            </div>
-
-            <div class="space-y-3 pt-2">
-                <a href="https://wa.me/3217088014?text=Hola,%20deseo%20activar%20mi%20Licencia%20MotoKeeper%20Supreme%20Pro" target="_blank" class="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm py-3.5 px-6 rounded-xl shadow-xl transition flex items-center justify-center space-x-2">
-                    <i class="fa-brands fa-whatsapp text-lg"></i>
-                    <span>Activar mi Licencia por WhatsApp</span>
-                </a>
-                <button onclick="resetTrialMoves()" class="text-xs text-gray-500 hover:text-gray-300 underline block mx-auto">
-                    Reiniciar contador demo (Solo pruebas)
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- APP MODALS -->
+    <!-- MODALS -->
     <div id="odometerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-cardbg border border-cardborder rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
             <button onclick="closeOdometerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
@@ -687,7 +856,7 @@
                         <input type="number" id="editCc" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl">Guardar Ficha</button>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl">Guardar</button>
             </form>
         </div>
     </div>
@@ -725,7 +894,7 @@
                     <label class="block text-gray-300 mb-1">Notas / Repuestos</label>
                     <textarea id="serviceNotes" rows="2" class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl">Guardar Registro</button>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl">Guardar</button>
             </form>
         </div>
     </div>
@@ -747,109 +916,174 @@
                     <label class="block text-gray-300 mb-1">Fecha de Vencimiento</label>
                     <input type="date" id="docExpDate" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2 text-white outline-none">
                 </div>
-                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2 rounded-lg">Guardar Fecha</button>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2 rounded-lg">Guardar</button>
             </form>
         </div>
     </div>
 
-    <!-- JAVASCRIPT APPLICATION ENGINE WITH TRIAL MOVE COUNTER -->
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
-        const MAX_TRIAL_MOVES = 6;
-        let userMovesCount = parseInt(localStorage.getItem('motoKeeperTrialMoves')) || 0;
-
-        function trackUserMove() {
-            userMovesCount++;
-            localStorage.setItem('motoKeeperTrialMoves', userMovesCount);
-            updateTrialUI();
-
-            if (userMovesCount >= MAX_TRIAL_MOVES) {
-                showLicenseModal();
-                return false; // Bloquea la acción si excedió
-            }
-            return true;
-        }
-
-        function updateTrialUI() {
-            const badge = document.getElementById('trialMovesBadge');
-            const text = document.getElementById('trialMovesText');
-            if(badge) badge.innerText = `Prueba: ${userMovesCount}/${MAX_TRIAL_MOVES} Movimientos`;
-            if(text) text.innerText = `${userMovesCount} / ${MAX_TRIAL_MOVES} Movimientos Usados`;
-
-            if(userMovesCount >= MAX_TRIAL_MOVES) {
-                showLicenseModal();
-            }
-        }
-
-        function showLicenseModal() {
-            document.getElementById('licensePaywallModal').classList.remove('hidden');
-        }
-
-        function resetTrialMoves() {
-            userMovesCount = 0;
-            localStorage.setItem('motoKeeperTrialMoves', 0);
-            updateTrialUI();
-            document.getElementById('licensePaywallModal').classList.add('hidden');
-        }
-
-        // 100 Consejos Técnicos
+        
+        // Array completo de 100 Consejos Técnicos y de Prevención Vial
         const techTips = [
             { icon: "fa-gauge-simple-high", category: "NEUMÁTICOS Y SEGURIDAD", title: "Presión de Neumáticos en Frío", desc: "Revisa la presión en frío antes de salir. Rodar con baja presión destruye los flancos y aumenta el consumo un 15%." },
             { icon: "fa-temperature-arrow-up", category: "MOTOR Y LUBRICACIÓN", title: "Calentamiento Progresivo en Frío", desc: "No aceleres inmediatamente al encender. Permite 60 segundos al ralentí para crear la película sintética de aceite." },
             { icon: "fa-link", category: "TRANSMISIÓN Y CADENA", title: "Limpieza y Engrase Cadena O-Ring", desc: "Engrasa cada 500 km y tras lluvia intensa. Limpia con desengrasantes libres de solventes destructivos para los sellos." },
             { icon: "fa-circle-stop", category: "TÉCNICA DE CONDUCCIÓN", title: "Distribución de Frenado", desc: "Ejerce 70% de fuerza en el freno delantero y 30% en el trasero para optimizar la transferencia de carga." },
-            { icon: "fa-eye", category: "SEGURIDAD VIAL", title: "Mirada Lejana y Periférica", desc: "Mira hacia donde quieres ir, no al obstáculo. La fijación visual al peligro es la causa #1 de colisión evitable." }
+            { icon: "fa-eye", category: "SEGURIDAD VIAL", title: "Mirada Lejana y Periférica", desc: "Mira hacia donde quieres ir, no al obstáculo. La fijación visual al peligro es la causa #1 de colisión evitable." },
+            { icon: "fa-shield-halved", category: "EQUIPAMIENTO DEL PILOTO", title: "Certificación de Casco ECE 22.06", desc: "Usa cascos certificados ECE 22.06 o DOT. Reemplázalo tras cualquier impacto directos o a los 5 años de uso." },
+            { icon: "fa-droplet", category: "SISTEMA DE FRENOS", title: "Líquido de Frenos Higroscópico", desc: "El líquido de frenos absorbe humedad del aire. Cánbialo cada 2 años para evitar hervir el fluido y perder fricción." },
+            { icon: "fa-bolt", category: "SISTEMA ELÉCTRICO", title: "Mantenimiento de Bornes de Batería", desc: "Limpia la sulfatación de bornes con agua tibia y bicarbonato. Aplica grasa dieléctrica para asegurar arranques firmes." },
+            { icon: "fa-arrows-split-up-and-left", category: "CONDUCCIÓN DEFENSIVA", title: "Posición Dominante en Carril", desc: "Roda en el tercio izquierdo o derecho del carril, nunca al centro por las manchas de aceite que dejan los autos." },
+            { icon: "fa-cloud-rain", category: "PISO MOJADO", title: "Fricción en Primeros Minutos de Lluvia", desc: "Al empezar a llover, la grasa acumulada flota en el asfalto. Reduce la velocidad a la mitad y evita pisar la pintura blanca." },
+
+            { icon: "fa-oil-can", category: "MOTOR Y LUBRICACIÓN", title: "Inspección de Nivel con Motor Frío", desc: "Mide el aceite con la moto nivelada sobre plano horizontal sin apoyarla en la pata lateral para lecturas precisas." },
+            { icon: "fa-compact-disc", category: "SISTEMA DE FRENOS", title: "Espesor Mínimo de Discos", desc: "Verifica el marcaje 'MIN TH' en el disco. Un disco por debajo de tolerancia flexiona y puede romperse al frenar fuerte." },
+            { icon: "fa-water", category: "SUSPENSIÓN", title: "Fugas en Retenes de Telescópicas", desc: "Si hay película de aceite en las barras delanteras, reemplaza los retenes inmediatamente antes de que contaminen las pastillas." },
+            { icon: "fa-arrows-spin", category: "TRANSMISIÓN Y CADENA", title: "Tensión Correcta de Cadena", desc: "Mantén una holgura de 25-35 mm. Una cadena hiper-tensada rompe el rodaje de salida del motor y deforma la tijera." },
+            { icon: "fa-circle-notch", category: "NEUMÁTICOS Y SEGURIDAD", title: "Profundidad Mínima de Labrado", desc: "Sustituye la llanta cuando la cocada esté por debajo de 1.6 mm. Los indicadores TWI dentro del labrado marcan la hora." },
+            { icon: "fa-user-ninja", category: "EQUIPAMIENTO DEL PILOTO", title: "Chaqueta con Protecciones Nivel 2", desc: "Usa ropa con protecciones CE Nivel 2 en hombros, codos y espalda. El textil de cordura debe ser de mínimo 600D." },
+            { icon: "fa-car-burst", category: "CONDUCCIÓN DEFENSIVA", title: "Puntos Ciegos de Camiones", desc: "Si no ves los espejos del camión, su conductor tampoco te ve a ti. Jamás te detengas o pases pegado a su lateral derecho." },
+            { icon: "fa-plug", category: "MOTOR Y LUBRICACIÓN", title: "Calibración de Bujía de Encendido", desc: "Revisa el electrodo cada 5,000 km. Una holgura incorrecta altera la combustión y eleva la temperatura del cilindro." },
+            { icon: "fa-filter", category: "MOTOR Y LUBRICACIÓN", title: "Filtro de Aire Limpio", desc: "Un filtro de aire saturado de polvo enriquece la mezcla en exceso, carbonizando la cámara y elevando gasto de gasolina." },
+            { icon: "fa-motorcycle", category: "SUSPENSIÓN", title: "Ajuste de Precarga Trasera", desc: "Incrementa la precarga si llevas pasajero o maletas para evitar que la geometría caiga y desestabilice la dirección." },
+
+            { icon: "fa-lightbulb", category: "SISTEMA ELÉCTRICO", title: "Alineación de Faro Principal", desc: "Ajusta la altura del haz de luz. Un faro muy alto encandila a los conductores de frente y reduce tu visibilidad inmediata." },
+            { icon: "fa-icicles", category: "CONDUCCIÓN DEFENSIVA", title: "Superficies de Baja Adherencia", desc: "Extrema precaución sobre tapas de alcantarilla metalizadas, rieles de tren y hojas mojadas; son verdaderos espejos de hielo." },
+            { icon: "fa-wind", category: "CONDUCCIÓN DEFENSIVA", title: "Viento Lateral Cruzado", desc: "En puentes o carreteras abiertas, inclina ligeramente la moto hacia el viento y relaja los brazos para amortiguar ráfagas." },
+            { icon: "fa-toolbox", category: "HERRAMIENTAS EN RUTA", title: "Kit de Reparación Tubeless", desc: "Carga siempre mechas/tarugos, lezna y minicompresor 12V o cartuchos CO2 para solucionar pinchazos en neumáticos sellomatic." },
+            { icon: "fa-hand-back-fist", category: "EQUIPAMIENTO DEL PILOTO", title: "Guantes con Deslizadores de Palma", desc: "El instinto al caer es poner las manos. Guantes con rígido de escafoides evitan fracturas severas por torsión de muñeca." },
+            { icon: "fa-gears", category: "TRANSMISIÓN Y CADENA", title: "Desgaste del Piñón y Corona", desc: "Si los dientes de la corona parecen ganchos de tiburón, cambia el kit de arrastre completo (cadena, piñón y corona)." },
+            { icon: "fa-gas-pump", category: "COMBUSTIBLE", title: "Filtro de Gasolina en Tanque", desc: "Evita rodar en la reserva extrema. La bomba sumergida se refrigera con la misma gasolina y absorbe sedimentos del fondo." },
+            { icon: "fa-screwdriver-wrench", category: "MANTENIMIENTO GENERAL", title: "Revisión de Tornillería General", desc: "Utiliza un torquímetro para apretar tornillos de eje de rueda y mordazas de freno según el manual de taller." },
+            { icon: "fa-shoe-prints", category: "EQUIPAMIENTO DEL PILOTO", title: "Botas de Caña Alta con Refuerzo", desc: "Las botas urbanas deben cubrir los maléolos (tobillos) y poseer suela rígida anti-aplastamiento lateral." },
+            { icon: "fa-car-side", category: "CONDUCCIÓN DEFENSIVA", title: "Apertura Inesperada de Puertas", desc: "Mantén mínimo 1.5 metros de distancia respecto a filas de autos estacionados para evitar ser golpeado por puertas." },
+
+            { icon: "fa-snowflake", category: "SISTEMA DE REFRIGERACIÓN", title: "Líquido Refrigerante (Coolant)", desc: "Nunca uses agua de grifo. El agua oxida los conductos de aluminio y hierve a 100°C; el refrigerante eleva el punto de ebullición." },
+            { icon: "fa-bell text-amber-400", category: "TELEMETRÍA Y CONTROL", title: "Verificación del SOAT y Tecno", desc: "Monitorea la vigencia legal en MotoKeeper. Circular vencido acarrea inmovilización y costos severos de patio." },
+            { icon: "fa-compass", category: "CONDUCCIÓN DEFENSIVA", title: "Distancia de Seguridad (Regla 3 Seg)", desc: "En condiciones secas, mantén 3 segundos con el vehículo que te antecede. En lluvia, duplica la brecha a 6 segundos." },
+            { icon: "fa-battery-full", category: "SISTEMA ELÉCTRICO", title: "Prueba de Voltaje del Alternador", desc: "Con motor encendido a 4000 RPM, el multímetro debe marcar entre 13.5V y 14.8V. Si supera 15V el regulador está fallando." },
+            { icon: "fa-circle-xmark", category: "SISTEMA DE FRENOS", title: "Pastillas Vidriadas (Fade)", desc: "Si frenas continuamente en bajadas largas, el calor vidria las pastillas. Usa el freno de motor en marchas cortas." },
+            { icon: "fa-bacon", category: "TRANSMISIÓN Y CADENA", title: "Alineación de Rueda Trasera", desc: "Verifica las marcas de escala a ambos lados del basculante para asegurar que la rueda trasera gire perfectamente recta." },
+            { icon: "fa-person-falling", category: "CONDUCCIÓN DEFENSIVA", title: "No Clavar Freno en Curva", desc: "Frena antes de inclinar la moto. Presionar el freno delantero dentro de la curva endereza la moto e invade el carril contrario." },
+            { icon: "fa-glasses", category: "EQUIPAMIENTO DEL PILOTO", title: "Visera Anti-Empañante (Pinlock)", desc: "Instala láminas Pinlock en la mica del casco para evitar que el aliento bloquee tu visión totalmente al llover o con frío." },
+            { icon: "fa-ring", category: "SUSPENSIÓN", title: "Holgura en Cuna de Dirección", desc: "Frena con el freno delantero e impulsa la moto adelante y atrás. Si sientes un 'clack' en el manubrio, ajusta o cambia cunas." },
+            { icon: "fa-triangle-exclamation", category: "SEGURIDAD VIAL", title: "Residuos de Diesel en Rotondas", desc: "Las rotondas son depósitos naturales de combustible derramado por camiones tanqueados en exceso. Pásalas muy erguido." },
+
+            { icon: "fa-spray-can", category: "ESTÉTICA Y CUIDADO", title: "Lavado de Motor con Agua a Presión", desc: "Evita dirigir la hidrolavadora directo a la computadora (ECU), relés, rodamientos de rueda o retenes de barra." },
+            { icon: "fa-mitten", category: "EQUIPAMIENTO DEL PILOTO", title: "Protección Térmica en Manos", desc: "Manos congeladas pierden un 70% de velocidad de reacción de frenado. Usa guantes térmicos o puños calefaccionados." },
+            { icon: "fa-route", category: "PLANIFICACIÓN DE RUTA", title: "Revisión Pre-Viaje Larga Distancia", desc: "Realiza el mantenimiento preventivo una semana antes de viajar, jamás el día anterior, para validar cualquier desajuste." },
+            { icon: "fa-gauge-high", category: "CONDUCCIÓN DEFENSIVA", title: "Velocidad Proporcional a Visibilidad", desc: "Si de noche las luces altas alumbran a 50 metros, no ruedes a una velocidad que requiera 60 metros para frenar." },
+            { icon: "fa-temperature-low", category: "MOTOR Y LUBRICACIÓN", title: "Viscosidad de Aceite según Clima", desc: "Respeta el número SAE (ej: 10W-40). El primer número 'W' indica fluidez en frío y el segundo la estabilidad a 100°C." },
+            { icon: "fa-stopwatch", category: "SISTEMA DE FRENOS", title: "Purgado Correcto de Aire en Mangueras", desc: "Si la palanca de freno se siente esponjosa, hay burbujas de aire atrapadas. Purga desde la mordaza inferior hacia arriba." },
+            { icon: "fa-sliders", category: "SUSPENSIÓN", title: "Rebote Amortiguador Trasero", desc: "Si la moto rebota repetidamente tras un bache, el hidráulico de extensión está gastado y el caucho despega del suelo." },
+            { icon: "fa-shuffle", category: "TRANSMISIÓN Y CADENA", title: "Goma Amortiguadora de Rueda (Sprocket)", desc: "Inspecciona los cauchos 'jgo de dampers' de la rueda trasera; si tienen holgura provocan golpes bruscos al acelerar." },
+            { icon: "fa-bullhorn", category: "SEGURIDAD VIAL", title: "Uso Preventivo del Claxon", desc: "Usa toques breves de bocina para advertir tu presencia al sobrepasar vehículos en intersecciones o carreteras angostas." },
+            { icon: "fa-person-shield", category: "EQUIPAMIENTO DEL PILOTO", title: "Protector de Torax y Costillas", desc: "Al hacer touring o ruteo de aventura, incluye pechera rígida para proteger órganos vitales contra impactos frontales." },
+
+            { icon: "fa-arrows-left-right-to-line", category: "NEUMÁTICOS Y SEGURIDAD", title: "Válvulas de Neumático Metalizadas", desc: "A altas velocidades la fuerza centrífuga dobla válvulas de goma viejas. Prefiere válvulas de aluminio con tapón con sello." },
+            { icon: "fa-circle-pause", category: "CONDUCCIÓN DEFENSIVA", title: "Detención en Semáforo en Primera", desc: "Permanece con la primera marcha enganchada y mirando los espejos hasta que el vehículo de atrás se haya detenido totalmente." },
+            { icon: "fa-microchip", category: "SISTEMA ELÉCTRICO", title: "Fusibles de Repuesto a Mano", desc: "Lleva siempre fusibles de repuesto (10A, 15A, 20A) en la caja de fusibles. Un fusible quemado apaga las luces o la bomba." },
+            { icon: "fa-fan", category: "SISTEMA DE REFRIGERACIÓN", title: "Funcionamiento del Electroventilador", desc: "Comprueba que el electroventilador encienda automáticamente en tráfico denso antes de que la aguja entre a zona roja." },
+            { icon: "fa-hand-fist", category: "TÉCNICA DE CONDUCCIÓN", title: "Agarre Suave en el Manubrio", desc: "No te sujetes con fuerza del manubrio; sobrecargas hombros e impides el autocontrol giroscópico natural de la moto." },
+            { icon: "fa-skull-crossbones", category: "SEGURIDAD VIAL", title: "Cuidado con la Mancha Amarilla de Aceite", desc: "Un arcoíris tornasol en el asfalto es una película puramente deslizante. Pásalo sin inclinar ni acelerar ni frenar." },
+            { icon: "fa-ear-listen", category: "EQUIPAMIENTO DEL PILOTO", title: "Uso de Tapones Auditivos para Viento", desc: "El ruido del viento dentro del casco supera los 90 dB a 100 km/h, produciendo fatiga extrema y daño auditivo permanente." },
+            { icon: "fa-fire-flame-curved", category: "MOTOR Y LUBRICACIÓN", title: "Nivel de Aceite Excesivo", desc: "Llenar el cárter por encima de la marca 'MAX' genera sobrepresión, rompe retenes de motor y contamina la caja de aire." },
+            { icon: "fa-triangle-exclamation", category: "CONDUCCIÓN DEFENSIVA", title: "Incorporación a Vías Rápidas", desc: "Usa la carrilera de aceleración para igualar la velocidad del flujo de tránsito antes de incorporarte a una autopista." },
+            { icon: "fa-cubes-stacked", category: "EQUIPAMIENTO DEL PILOTO", title: "Repolición de Ejes y Espejos", desc: "Mantén tus espejos ajustados para ver la línea del hombro y el carril adyacente, nunca tu propio brazo empacado." },
+
+            { icon: "fa-layer-group", category: "SUSPENSIÓN", title: "Bujes del Basculante y Tijera", desc: "Verifica que el tren trasero no tenga juego lateral sujetando la rueda y empujándola transversalmente con fuerza." },
+            { icon: "fa-anchor", category: "SISTEMA DE FRENOS", title: "Chequeo de Pasadores de Mordaza", desc: "Lubrica los pasadores flotantes de la pinza de freno con grasa sintética de silicona para evitar frenados pegados." },
+            { icon: "fa-cloud-sun", category: "CONDUCCIÓN DEFENSIVA", title: "Deslumbramiento por Sol Naciente/Poniente", desc: "Cuando el sol esté en el horizonte bajo, asume que los conductores detrás tuyo no te ven; aumenta tu espacio de protección." },
+            { icon: "fa-wrench", category: "MANTENIMIENTO GENERAL", title: "Cuidado del Cable de Embrague", desc: "Lubrica el guaya/cable de embrague inyectando lubricante con prensa de guayas para evitar que se deshilache en la manija." },
+            { icon: "fa-bottle-droplet", category: "COMBUSTIBLE", title: "Uso de Aditivos Limpiadores de Inyectores", desc: "Aplica aditivo limpiador de inyectores cada 5,000 km para mantener los orificios micro-pulverizadores sin goma." },
+            { icon: "fa-helmet-safety", category: "EQUIPAMIENTO DEL PILOTO", title: "Limpieza Correcta del Casco", desc: "Limpia la mica del casco únicamente con agua tibia y paños de microfibra. Los limpiavidrios químicos degradan el policarbonato." },
+            { icon: "fa-road-barrier", category: "SEGURIDAD VIAL", title: "Zonas de Obras en la Vía", desc: "Reduce la marcha drásticamente sobre fresado de asfalto o gravilla suelta; el manubrio tenderá a serpentear." },
+            { icon: "fa-cable-car", category: "SISTEMA ELÉCTRICO", title: "Inspección de Arnés Eléctrico", desc: "Revisa que los cables no rocen con el chasis afilado bajo el tanque para prevenir cortocircuitos por fricción." },
+            { icon: "fa-circle-nodes", category: "NEUMÁTICOS Y SEGURIDAD", title: "Balanceo de Ruedas", desc: "Balancea las ruedas si sientes vibraciones en el manubrio a velocidades superiores a 80 km/h; protegerás los rodamientos." },
+            { icon: "fa-shoe-prints", category: "TÉCNICA DE CONDUCCIÓN", title: "Posición de los Pies en los Posapiés", desc: "Apoya la métatarsiana (bola del pie) sobre las estriberas, no los tacones. Esto evita que los pies enganchen el suelo en curvas." },
+
+            { icon: "fa-droplet-slash", category: "MOTOR Y LUBRICACIÓN", title: "Fugas por Empaque de Culata", desc: "Si observas sudoración acuosa u oleosa entre bloque y culata, revisa el torque de espárragos antes de quemar la junta." },
+            { icon: "fa-wind", category: "MOTOR Y LUBRICACIÓN", title: "Desogue del Cárter (Breather)", desc: "Limpia el tubo de desagüe transparente del filtro de aire para evacuar condensaciones de aceite y vapor atrapados." },
+            { icon: "fa-handshake-angle", category: "CONDUCCIÓN DEFENSIVA", title: "Pasajero (Parrillero) Capacitado", desc: "Instruye a tu pasajero a mirar sobre tu hombro interno en las curvas y nunca inclinarse hacia el lado contrario a la gira." },
+            { icon: "fa-circle-play", category: "EQUIPAMIENTO DEL PILOTO", title: "Cinta Reflectiva 3M en Casco/Moto", desc: "Asegúrate de llevar elementos reflectivos visibles desde 150 metros de distancia para recorridos nocturnos o de niebla." },
+            { icon: "fa-shield-cat", category: "CONDUCCIÓN DEFENSIVA", title: "Cuidado con Animales en la Vía", desc: "Si un perro corre a interceptarte, mantén la velocidad constante o acelera ligeramente al acercarte; romperás su ángulo de ataque." },
+            { icon: "fa-battery-quarter", category: "SISTEMA ELÉCTRICO", title: "Vida Útil de Baterías AGM/Gel", desc: "Una batería de moto dura 2 a 3 años. Si el voltaje en reposo cae por debajo de 12.4V, la sulfatación interna inició." },
+            { icon: "fa-arrows-to-dot", category: "SUSPENSIÓN", title: "Simetría en Barras de Suspensión", desc: "Asegúrate de que ambas barras delanteras sobresalgan exactamente la misma cantidad de milímetros sobre la platina superior." },
+            { icon: "fa-shield-heart", category: "CONDUCCIÓN DEFENSIVA", title: "Fatiga del Conductor", desc: "Haz paradas de 15 minutos cada 1.5 a 2 horas de rodaje continuado. La deshidratación causa micro-sueños fatales." },
+            { icon: "fa-circle-dot", category: "NEUMÁTICOS Y SEGURIDAD", title: "Verificación de Llantas Nuevas", desc: "Rodar los primeros 100 km de una llanta nueva con precaución extra: la película protectora de moho de fábrica es resbaladiza." },
+            { icon: "fa-link-slash", category: "TRANSMISIÓN Y CADENA", title: "Eslabón Master Lock de Cadena", desc: "El clip del candado de cadena debe instalarse siempre con la parte cerrada orientada hacia el sentido de giro de la rueda." },
+
+            { icon: "fa-thermometer", category: "SISTEMA DE REFRIGERACIÓN", title: "Tapa del Radiador Presurizada", desc: "Nunca abras la tapa del radiador caliente. Inspecciona el empaque de goma de la tapa para evitar fugas de vapor." },
+            { icon: "fa-temperature-arrow-down", category: "SISTEMA DE FRENOS", title: "Desgaste Desigual de Pastillas", desc: "Si una pastilla se desgasta más que su pareja, los pistones de la pinza están agarrotados de mugre y requieren limpieza." },
+            { icon: "fa-caravan", category: "CONDUCCIÓN DEFENSIVA", title: "Rebasar en Línea Punteada Únicamente", desc: "Nunca adelantes en curva, puentes, intersecciones o doble línea continua. La falta de visibilidad es choque frontal." },
+            { icon: "fa-toolbox", category: "EQUIPAMIENTO DEL PILOTO", title: "Traje de Lluvia de Una o Dos Piezas", desc: "Un traje impermeable brillante (amarillo/naranja) incrementa tu visibilidad dramáticamente bajo lluvias intensas." },
+            { icon: "fa-eye-slash", category: "CONDUCCIÓN DEFENSIVA", title: "Efecto Túnel por Alta Velocidad", desc: "A mayor velocidad, tu campo visual lateral se reduce de 180° a menos de 40°. Disminuye la velocidad en intersecciones." },
+            { icon: "fa-gears", category: "TRANSMISIÓN Y CADENA", title: "Cambio de Marcas Sincronizado", desc: "Sincroniza el corte de acelerador y desacople de embrague al cambiar marcha para evitar sobre-revolucionar la caja." },
+            { icon: "fa-umbrella", category: "ESTÉTICA Y CUIDADO", title: "Secado Post-Lluvia y Aceitado", desc: "Seca la cadena y partes cromadas tras rodar bajo lluvia para evitar picaduras de óxido prematuras." },
+            { icon: "fa-plug-circle-bolt", category: "SISTEMA ELÉCTRICO", title: "Capuchón y Cable de Bujía", desc: "Asegúrate de que el capuchón de bujía selle herméticamente para evitar que el agua apague el motor en charcos." },
+            { icon: "fa-skull", category: "CONDUCCIÓN DEFENSIVA", title: "Cuidado con Manchas de Grasa en Peajes", desc: "Los carriles de peaje acumulan toneladas de aceite y hollín. Detén la moto poniendo el pie firme sobre piso seco." },
+            { icon: "fa-compass-drafting", category: "TELEMETRÍA Y CONTROL", title: "Monitoreo Constante en MotoKeeper", desc: "Consulta regularmente esta app para mantener al día los mantenimientos preventivos y rodar siempre con tranquilidad." },
+
+            { icon: "fa-cloud", category: "CONDUCCIÓN DEFENSIVA", title: "Frenado sobre Marcado Vial Pintado", desc: "Evita frenar fuerte sobre las cebras de peatones o flechas en el asfalto mojado; la pintura reduce el agarre un 80%." },
+            { icon: "fa-road-lock", category: "SEGURIDAD VIAL", title: "Distancia Lateral con Vehículos", desc: "Al sobrepasar ciclistas o peatones, deja un espacio lateral mínimo de 1.5 metros por seguridad." },
+            { icon: "fa-gas-pump", category: "COMBUSTIBLE", title: "Gasolina de Octanaje Adecuado", desc: "Usa el octanaje sugerido por el fabricante. Usar menor octanaje genera pistoneo/cascabeleo y destruye los pistones." },
+            { icon: "fa-arrows-rotate", category: "SUSPENSIÓN", title: "Cambio de Aceite de Horquillas", desc: "Reemplaza el fluido de las telescópicas delanteras cada 15,000 km para mantener la capacidad de amortiguamiento." },
+            { icon: "fa-weight-hanging", category: "CONDUCCIÓN DEFENSIVA", title: "Límite de Carga Máxima Permisible", desc: "No excedas el peso máximo combinado (moto + piloto + pasajero + carga) especificado en la etiqueta del chasis." },
+            { icon: "fa-vest", category: "EQUIPAMIENTO DEL PILOTO", title: "Chaleco de Airbag para Motociclista", desc: "Los chalecos de airbag activados por pirotecnia o cable protegen cervicales y tórax reduciendo lesiones graves un 90%." },
+            { icon: "fa-stop", category: "SISTEMA DE FRENOS", title: "Uso de Frenado Combinado / ABS", desc: "Si tu moto posee ABS, presiona la palanca a fondo en emergencia sin miedo a bloquear. El sistema modulará la presión." },
+            { icon: "fa-truck-pickup", category: "CONDUCCIÓN DEFENSIVA", title: "Cargas Desprendibles de Camiones", desc: "Mantente alejado de camiones que transporten escombros, madera o arena suelta para evitar impactos en el visor." },
+            { icon: "fa-siren", category: "SEGURIDAD VIAL", title: "Pasaje a Vehículos de Emergencia", desc: "Al oír sirenas, mantén la calma, abre paso a la derecha e indícalo con las luces direccionales a tiempo." },
+            { icon: "fa-heart-pulse", category: "CONDUCCIÓN DEFENSIVA", title: "Rodar en Buenas Condiciones Físicas", desc: "Nunca conduzcas bajo los efectos de alcohol, medicamentos que causen somnolencia o estrés emocional severo." }
         ];
 
         let currentTipIndex = 0;
 
         function updateTipBanner() {
-            const tip = techTips[currentTipIndex % techTips.length];
+            const tip = techTips[currentTipIndex];
             document.getElementById('tipIcon').className = `fa-solid ${tip.icon} text-xl`;
             document.getElementById('tipCategory').innerText = tip.category;
-            document.getElementById('tipCounter').innerText = `${(currentTipIndex % techTips.length) + 1}/${techTips.length}`;
+            document.getElementById('tipCounter').innerText = `${currentTipIndex + 1}/${techTips.length}`;
             document.getElementById('tipTitle').innerText = tip.title;
             document.getElementById('tipDescription').innerText = tip.desc;
         }
 
-        function nextTip() { currentTipIndex++; updateTipBanner(); }
-        function prevTip() { currentTipIndex = (currentTipIndex - 1 + techTips.length); updateTipBanner(); }
+        function nextTip() { currentTipIndex = (currentTipIndex + 1) % techTips.length; updateTipBanner(); }
+        function prevTip() { currentTipIndex = (currentTipIndex - 1 + techTips.length) % techTips.length; updateTipBanner(); }
 
-        // State Manager
+        // State & Data completamente inicializado en 0 para nuevo uso
         const defaultState = {
-            bikeProfile: { name: "Yamaha MT-07", plate: "KEEPER", year: 2024, cc: 689, odometer: 12500 },
+            bikeProfile: { name: "Mi Moto", plate: "PLACA", year: "-", cc: 0, odometer: 0 },
             selectedHotspot: "aceite",
             components: [
-                { id: "aceite", name: "Aceite de Motor & Filtro", interval: 3000, lastKm: 10000, icon: "fa-oil-can", spec: "10W-40 Sintético", torque: "21 Nm", tolerance: "Cada 3,000 km" },
-                { id: "cadena", name: "Kit de Arrastre & Cadena", interval: 800, lastKm: 12100, icon: "fa-link", spec: "Cadena 525 O-Ring", torque: "93 Nm", tolerance: "Engrase cada 500 km" },
-                { id: "frenos", name: "Sistema de Frenos & Líquido", interval: 10000, lastKm: 5000, icon: "fa-ban", spec: "Pastillas Sinterizadas DOT 4", torque: "40 Nm", tolerance: "Revisión periódica" },
-                { id: "llantas", name: "Neumáticos & Presión", interval: 1000, lastKm: 12000, icon: "fa-circle-dot", spec: "Del: 36 psi | Tras: 42 psi", torque: "N/A", tolerance: "Revisión mensual" }
+                { id: "aceite", name: "Aceite de Motor & Filtro", interval: 3000, lastKm: 0, icon: "fa-oil-can", spec: "Sin especificar", torque: "0 Nm", tolerance: "Cada 3,000 km" },
+                { id: "cadena", name: "Kit de Arrastre & Cadena", interval: 800, lastKm: 0, icon: "fa-link", spec: "Sin especificar", torque: "0 Nm", tolerance: "Engrase cada 500 km" },
+                { id: "frenos", name: "Sistema de Frenos & Líquido", interval: 10000, lastKm: 0, icon: "fa-ban", spec: "Sin especificar", torque: "0 Nm", tolerance: "Revisión periódica" },
+                { id: "llantas", name: "Neumáticos & Presión", interval: 1000, lastKm: 0, icon: "fa-circle-dot", spec: "Sin especificar", torque: "N/A", tolerance: "Revisión mensual" }
             ],
-            maintenanceLogs: [
-                { id: 1, date: "2026-02-15", type: "Aceite de Motor & Filtro", km: 10000, cost: 45.00, notes: "Filtro OEM Yamaha y Motul 7100" }
-            ],
-            documents: { soat: "2026-12-01", tecnico: "2026-11-15", licencia: "2028-05-20" },
-            fuelLogs: [
-                { id: 1, date: "2026-03-01", km: 12100, amount: 3.5, cost: 14.50 },
-                { id: 2, date: "2026-03-10", km: 12500, amount: 3.8, cost: 15.80 }
-            ],
+            maintenanceLogs: [],
+            documents: { soat: "Pendiente", tecnico: "Pendiente", licencia: "Pendiente" },
+            fuelLogs: [],
             checklist: [
-                { id: 1, label: "Presión y desgaste de banda de llantas", checked: true },
-                { id: 2, label: "Tacto de freno delantero y trasero", checked: true },
+                { id: 1, label: "Presión y desgaste de banda de llantas", checked: false },
+                { id: 2, label: "Tacto de freno delantero y trasero", checked: false },
                 { id: 3, label: "Holgura y lubricación de cadena", checked: false },
-                { id: 4, label: "Luces, intermitentes y claxon", checked: true },
+                { id: 4, label: "Luces, intermitentes y claxon", checked: false },
                 { id: 5, label: "Sin fugas visibles de fluidos", checked: false },
-                { id: 6, label: "Ajuste de espejos retrovisores", checked: true }
+                { id: 6, label: "Ajuste de espejos retrovisores", checked: false }
             ]
         };
 
-        let appState = JSON.parse(localStorage.getItem('motoKeeperSupremeState')) || defaultState;
+        // Forzar reinicio de estado para iniciar desde cero si se carga este archivo limpio
+        localStorage.removeItem('motoKeeperSupremeState');
+        let appState = defaultState;
 
         function saveState() {
             localStorage.setItem('motoKeeperSupremeState', JSON.stringify(appState));
             renderApp();
         }
 
-        // WEB NOTIFICATIONS
+        // WEB NOTIFICATIONS API SYSTEM (REDISEÑADO)
         function checkNotificationPermission() {
             const btn = document.getElementById('notifyBtn');
             const statusBadge = document.getElementById('pushStatusBadge');
@@ -858,56 +1092,86 @@
             const reqBtn = document.getElementById('requestPermissionBtn');
 
             if (!("Notification" in window)) {
-                document.getElementById('notifyStatusText').innerText = "Sin Push";
-                if(statusBadge) statusBadge.innerText = "Estado: No Soportado";
+                document.getElementById('notifyStatusText').innerText = "Sin Soporte Push";
+                if(statusBadge) statusBadge.innerText = "Estado: No Soportado por el Navegador";
+                if(reqBtn) reqBtn.classList.add('hidden');
                 return;
             }
 
             if (Notification.permission === "granted") {
                 document.getElementById('notifyStatusText').innerText = "Push Activo";
-                btn.className = "flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono px-3 py-2 rounded-xl";
+                btn.className = "flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono px-3 py-2 rounded-lg";
                 
                 if(statusTitle) statusTitle.innerText = "Notificaciones Push Concedidas";
                 if(statusBadge) {
                     statusBadge.innerText = "Estado: PERMISO OTORGADO";
                     statusBadge.className = "text-[11px] font-mono text-emerald-400 font-bold";
                 }
-                if(statusDesc) statusDesc.innerText = "MotoKeeper está listo para emitir alertas sobre aceite, SOAT y cadena.";
+                if(statusDesc) statusDesc.innerText = "Tu celular/dispositivo está configurado para recibir alertas push sobre cambios de aceite, mantenimiento de cadena y vencimiento de documentos.";
                 if(reqBtn) {
-                    reqBtn.innerText = "Probar Notificación";
-                    reqBtn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition";
+                    reqBtn.innerText = "Probar Notificación al Móvil";
+                    reqBtn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition";
                     reqBtn.onclick = sendTestNotification;
                 }
             } else if (Notification.permission === "denied") {
                 document.getElementById('notifyStatusText').innerText = "Bloqueadas";
-                btn.className = "flex items-center space-x-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono px-3 py-2 rounded-xl";
+                btn.className = "flex items-center space-x-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono px-3 py-2 rounded-lg";
+                
+                if(statusTitle) statusTitle.innerText = "Notificaciones Bloqueadas";
+                if(statusBadge) {
+                    statusBadge.innerText = "Estado: PERMISO DENEGADO";
+                    statusBadge.className = "text-[11px] font-mono text-red-400 font-bold";
+                }
+                if(statusDesc) statusDesc.innerText = "Las notificaciones fueron bloqueadas en los ajustes de tu navegador o sistema. Habilítalas en el ícono del candado de la barra de navegación.";
+                if(reqBtn) reqBtn.classList.add('hidden');
+            } else {
+                document.getElementById('notifyStatusText').innerText = "Activar Push";
+                btn.className = "flex items-center space-x-2 bg-brand-accent/10 border border-brand-accent/30 text-brand-accent text-xs font-mono px-3 py-2 rounded-lg";
+                
+                if(statusTitle) statusTitle.innerText = "Solicitar Permiso Push";
+                if(statusBadge) {
+                    statusBadge.innerText = "Estado: PENDIENTE DE AUTORIZACIÓN";
+                    statusBadge.className = "text-[11px] font-mono text-amber-400 font-bold";
+                }
+                if(reqBtn) {
+                    reqBtn.innerText = "Permitir en mi Teléfono";
+                    reqBtn.className = "bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition";
+                    reqBtn.onclick = requestNotificationPermission;
+                }
             }
         }
 
         function requestNotificationPermission() {
-            if (!("Notification" in window)) return;
+            if (!("Notification" in window)) {
+                alert("Este navegador no soporta notificaciones de escritorio o móvil.");
+                return;
+            }
             Notification.requestPermission().then(permission => {
                 checkNotificationPermission();
                 if (permission === "granted") {
-                    sendNativeNotification("MotoKeeper Pro - Alertas Activas", "Notificaciones push configuradas con éxito para tu motocicleta.");
+                    sendNativeNotification("MotoKeeper Pro - Alertas Activas", "Notificaciones push configuradas correctamente para tu motocicleta.");
                 }
             });
         }
 
         function sendNativeNotification(title, body) {
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3198/3198344.png" });
+                new Notification(title, {
+                    body: body,
+                    icon: "https://cdn-icons-png.flaticon.com/512/3198/3198344.png"
+                });
             }
         }
 
         function sendTestNotification() {
             if (Notification.permission === "granted") {
-                sendNativeNotification("Prueba Telemetría MotoKeeper", "¡Conexión Push confirmada!");
+                sendNativeNotification("Prueba de Telemetría MotoKeeper", "¡Conexión Push confirmada! Recibirás notificaciones de mantenimiento directamente aquí.");
             } else {
                 requestNotificationPermission();
             }
         }
 
+        // NAVIGATION
         function switchTab(tabId) {
             ['blueprint', 'notifications', 'analytics', 'maintenance', 'documents', 'expenses', 'checklist'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden');
@@ -978,7 +1242,6 @@
         }
 
         function resetComponentInterval(id) {
-            if (!trackUserMove()) return;
             const comp = appState.components.find(c => c.id === id);
             if(comp) {
                 comp.lastKm = appState.bikeProfile.odometer;
@@ -988,7 +1251,7 @@
                     type: comp.name,
                     km: appState.bikeProfile.odometer,
                     cost: 0,
-                    notes: "Mantenimiento preventivo actualizado"
+                    notes: "Mantenimiento preventivo en cero"
                 });
                 saveState();
             }
@@ -998,17 +1261,23 @@
             checkNotificationPermission();
             const container = document.getElementById('activeAlertsList');
             container.innerHTML = '';
+
             let alerts = [];
 
             appState.components.forEach(c => {
-                const elapsed = appState.bikeProfile.odometer - c.lastKm;
-                const percent = (elapsed / c.interval) * 100;
-                if(percent >= 75) {
-                    alerts.push({
-                        title: `Mantenimiento Próximo: ${c.name}`,
-                        desc: `Has consumido el ${percent.toFixed(0)}% del intervalo. Restan ${(c.interval - elapsed)} km.`,
-                        level: percent >= 100 ? 'red' : 'amber'
-                    });
+                if (c.lastKm > 0 || appState.bikeProfile.odometer > 0) {
+                    const elapsed = appState.bikeProfile.odometer - c.lastKm;
+                    const percent = (elapsed / c.interval) * 100;
+                    if(percent >= 80) {
+                        alerts.push({
+                            title: `Mantenimiento Próximo: ${c.name}`,
+                            desc: `Has consumido el ${percent.toFixed(0)}% del intervalo. Restan ${(c.interval - elapsed)} km.`,
+                            level: percent >= 100 ? 'red' : 'amber'
+                        });
+                        if (percent >= 100) {
+                            sendNativeNotification("¡Alerta de Mantenimiento!", `El componente ${c.name} requiere atención inmediata.`);
+                        }
+                    }
                 }
             });
 
@@ -1016,7 +1285,7 @@
                 container.innerHTML = `
                     <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center space-x-3">
                         <i class="fa-solid fa-circle-check text-lg"></i>
-                        <span>Todos los componentes están dentro de rango seguro. No hay alertas críticas.</span>
+                        <span>Todos los sistemas están dentro del rango óptimo. No hay alertas críticas.</span>
                     </div>
                 `;
                 return;
@@ -1061,10 +1330,10 @@
             fuelChartInstance = new Chart(ctxFuel, {
                 type: 'line',
                 data: {
-                    labels: labels.length ? labels : ['Tanqueo 1', 'Tanqueo 2'],
+                    labels: labels.length ? labels : ['Sin datos'],
                     datasets: [{
                         label: 'Rendimiento (km/gal)',
-                        data: efficiencies.length ? efficiencies : [105, 114],
+                        data: efficiencies.length ? efficiencies : [0],
                         borderColor: '#00f0ff',
                         backgroundColor: 'rgba(0, 240, 255, 0.1)',
                         fill: true,
@@ -1093,7 +1362,7 @@
                 data: {
                     labels: ['Combustible ($)', 'Mantenimiento ($)'],
                     datasets: [{
-                        data: [totalFuelCost || 30.30, totalMaintCost || 45.00],
+                        data: [totalFuelCost, totalMaintCost],
                         backgroundColor: ['#f59e0b', '#ea580c'],
                         borderWidth: 0
                     }]
@@ -1112,12 +1381,6 @@
             document.getElementById('bikeSubDetails').innerText = `Año ${appState.bikeProfile.year} • ${appState.bikeProfile.cc} cc`;
             document.getElementById('headerOdoText').innerText = `${appState.bikeProfile.odometer.toLocaleString()} km`;
 
-            const oilComp = appState.components.find(c => c.id === 'aceite');
-            if(oilComp) {
-                const rem = oilComp.interval - (appState.bikeProfile.odometer - oilComp.lastKm);
-                document.getElementById('oilKmRemaining').innerText = rem > 0 ? `${rem} km` : 'Revisar Ya';
-            }
-
             renderBlueprintPanel();
             renderComponentsGrid();
             renderMaintenanceTable();
@@ -1126,7 +1389,6 @@
             renderChecklist();
             checkNotificationPermission();
             updateTipBanner();
-            updateTrialUI();
         }
 
         function renderComponentsGrid() {
@@ -1236,40 +1498,29 @@
         }
 
         function toggleChecklist(id) {
-            if (!trackUserMove()) return;
             const item = appState.checklist.find(i => i.id === id);
             if(item) { item.checked = !item.checked; saveState(); }
         }
-        function resetChecklist() { 
-            if (!trackUserMove()) return;
-            appState.checklist.forEach(i => i.checked = false); saveState(); 
-        }
+        function resetChecklist() { appState.checklist.forEach(i => i.checked = false); saveState(); }
 
-        // Modals Operations with move tracking
+        // Modals
         function openOdometerModal() { document.getElementById('modalOdometerInput').value = appState.bikeProfile.odometer; document.getElementById('odometerModal').classList.remove('hidden'); }
         function closeOdometerModal() { document.getElementById('odometerModal').classList.add('hidden'); }
-        function saveOdometer(e) { 
-            e.preventDefault(); 
-            if (!trackUserMove()) { closeOdometerModal(); return; }
-            appState.bikeProfile.odometer = parseInt(document.getElementById('modalOdometerInput').value) || 0; 
-            saveState(); 
-            closeOdometerModal(); 
-        }
+        function saveOdometer(e) { e.preventDefault(); appState.bikeProfile.odometer = parseInt(document.getElementById('modalOdometerInput').value) || 0; saveState(); closeOdometerModal(); }
 
         function openBikeEditModal() { 
-            document.getElementById('editBrandModel').value = appState.bikeProfile.name;
-            document.getElementById('editPlate').value = appState.bikeProfile.plate;
-            document.getElementById('editYear').value = appState.bikeProfile.year;
-            document.getElementById('editCc').value = appState.bikeProfile.cc;
+            document.getElementById('editBrandModel').value = appState.bikeProfile.name === "Mi Moto" ? "" : appState.bikeProfile.name;
+            document.getElementById('editPlate').value = appState.bikeProfile.plate === "PLACA" ? "" : appState.bikeProfile.plate;
+            document.getElementById('editYear').value = appState.bikeProfile.year === "-" ? "" : appState.bikeProfile.year;
+            document.getElementById('editCc').value = appState.bikeProfile.cc === 0 ? "" : appState.bikeProfile.cc;
             document.getElementById('bikeEditModal').classList.remove('hidden'); 
         }
         function closeBikeEditModal() { document.getElementById('bikeEditModal').classList.add('hidden'); }
         function saveBikeProfile(e) {
             e.preventDefault();
-            if (!trackUserMove()) { closeBikeEditModal(); return; }
-            appState.bikeProfile.name = document.getElementById('editBrandModel').value;
-            appState.bikeProfile.plate = document.getElementById('editPlate').value;
-            appState.bikeProfile.year = document.getElementById('editYear').value;
+            appState.bikeProfile.name = document.getElementById('editBrandModel').value || "Mi Moto";
+            appState.bikeProfile.plate = document.getElementById('editPlate').value || "PLACA";
+            appState.bikeProfile.year = document.getElementById('editYear').value || "-";
             appState.bikeProfile.cc = parseInt(document.getElementById('editCc').value) || 0;
             saveState();
             closeBikeEditModal();
@@ -1279,7 +1530,6 @@
         function closeServiceModal() { document.getElementById('serviceModal').classList.add('hidden'); }
         function saveServiceEntry(e) {
             e.preventDefault();
-            if (!trackUserMove()) { closeServiceModal(); return; }
             appState.maintenanceLogs.unshift({
                 id: Date.now(),
                 type: document.getElementById('serviceType').value,
@@ -1294,7 +1544,6 @@
 
         function saveFuelEntry(e) {
             e.preventDefault();
-            if (!trackUserMove()) return;
             const km = parseInt(document.getElementById('fuelKm').value) || 0;
             appState.fuelLogs.push({
                 id: Date.now(),
@@ -1311,20 +1560,13 @@
         function closeDocModal() { document.getElementById('docModal').classList.add('hidden'); }
         function saveDocEntry(e) {
             e.preventDefault();
-            if (!trackUserMove()) { closeDocModal(); return; }
             appState.documents[document.getElementById('docType').value] = document.getElementById('docExpDate').value;
             saveState();
             closeDocModal();
         }
 
-        function deleteLog(id) { 
-            if (!trackUserMove()) return;
-            appState.maintenanceLogs = appState.maintenanceLogs.filter(l => l.id !== id); saveState(); 
-        }
-        function deleteFuelLog(id) { 
-            if (!trackUserMove()) return;
-            appState.fuelLogs = appState.fuelLogs.filter(f => f.id !== id); saveState(); 
-        }
+        function deleteLog(id) { appState.maintenanceLogs = appState.maintenanceLogs.filter(l => l.id !== id); saveState(); }
+        function deleteFuelLog(id) { appState.fuelLogs = appState.fuelLogs.filter(f => f.id !== id); saveState(); }
 
         setInterval(nextTip, 8000);
 
