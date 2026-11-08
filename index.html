@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotoKeeper Supreme Spec - Telemetría & Notificaciones Push Pro</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            accent: '#00f0ff'
+                        },
+                        darkbg: '#07090e',
+                        cardbg: '#0f172a',
+                        cardborder: '#1e293b'
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #07090e; color: #f3f4f6; }
+        .blueprint-grid {
+            background-image: linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .hotspot-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7); }
+            70% { transform: scale(1.15); box-shadow: 0 0 0 12px rgba(0, 240, 255, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+        }
+        .glow-effect { box-shadow: 0 0 50px -10px rgba(249, 115, 22, 0.25); }
+        .glow-accent { box-shadow: 0 0 40px -10px rgba(0, 240, 255, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-200 antialiased selection:bg-brand-500 selection:text-white flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-cardbg/80 backdrop-blur-md border-b border-cardborder fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-600/30">
+                        <i class="fa-solid fa-bell text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-brand-500 bg-clip-text text-transparent">MotoKeeper</span>
+                        <span class="text-[10px] text-brand-accent font-mono font-bold px-2 py-0.5 rounded bg-brand-accent/10 border border-brand-accent/20 ml-2">SUPREME v4.0</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8 text-xs font-mono font-semibold uppercase tracking-wider text-gray-400">
+                    <a href="#features" class="hover:text-brand-accent transition">Características</a>
+                    <a href="#app-demo" class="hover:text-brand-accent transition">Telemetría Live</a>
+                    <a href="#benefits" class="hover:text-brand-accent transition">Beneficios</a>
+                    <a href="#faq" class="hover:text-brand-accent transition">FAQ</a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <!-- Trial badge -->
+                    <div class="hidden sm:flex items-center space-x-1.5 bg-brand-500/10 border border-brand-500/30 text-brand-500 text-xs font-mono px-3 py-1.5 rounded-xl">
+                        <i class="fa-solid fa-bolt text-xs"></i>
+                        <span id="trialMovesBadge">Prueba: 0/6 Movimientos</span>
+                    </div>
+                    <button id="notifyBtn" onclick="requestNotificationPermission()" class="flex items-center space-x-2 bg-brand-accent/10 hover:bg-brand-accent/20 border border-brand-accent/30 text-brand-accent text-xs font-mono px-3 py-2 rounded-xl transition">
+                        <i id="notifyIcon" class="fa-solid fa-bell"></i>
+                        <span id="notifyStatusText" class="hidden sm:inline">Push</span>
+                    </button>
+                    <a href="#app-demo" class="bg-gradient-to-r from-brand-600 to-amber-500 hover:from-brand-500 hover:to-amber-400 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/25 transition">
+                        Probar Sistema
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-28 pb-16 overflow-hidden blueprint-grid">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-3xl mx-auto space-y-6">
+                <div class="inline-flex items-center space-x-2 bg-brand-500/10 border border-brand-500/30 text-brand-500 px-4 py-1.5 rounded-full text-xs font-mono font-semibold">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Telemetría Proactiva & Notificaciones Push Nativas</span>
+                </div>
+                <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
+                    El sistema definitivo para <span class="bg-gradient-to-r from-brand-500 via-amber-400 to-brand-accent bg-clip-text text-transparent">monitorear y proteger</span> tu moto.
+                </h1>
+                <p class="text-base sm:text-lg text-gray-400 leading-relaxed">
+                    Lleva el control de componentes clave, aceite, legalidad SOAT, consumo de combustible y recibe alertas directas en la pantalla de bloqueo de tu dispositivo.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+                    <a href="#app-demo" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-xl shadow-brand-600/30 transition flex items-center justify-center space-x-2">
+                        <span>Lanzar Dashboard Interactivo</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                    <button onclick="requestNotificationPermission()" class="w-full sm:w-auto bg-cardbg hover:bg-cardborder border border-cardborder text-gray-300 font-semibold text-sm px-8 py-3.5 rounded-xl transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-mobile-screen-button text-brand-accent"></i>
+                        <span>Activar Alertas Celular</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- App Live Interactive Container -->
+    <section id="app-demo" class="py-6 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- TRIAL COUNTER BANNER -->
+        <div class="bg-gradient-to-r from-brand-600/20 via-cardbg to-amber-500/10 border border-brand-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500 flex-shrink-0">
+                    <i class="fa-solid fa-key text-base"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs sm:text-sm font-bold text-white">Modo de Evaluación Demostrativo</h4>
+                    <p class="text-[11px] text-gray-400">Puedes probar hasta <strong class="text-brand-accent">6 movimientos</strong> interactivos antes de activar tu licencia.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+                <span id="trialMovesText" class="text-xs font-mono font-bold text-brand-500 bg-darkbg/80 border border-brand-500/30 px-3 py-1.5 rounded-xl">0 / 6 Movimientos Usados</span>
+                <button onclick="showLicenseModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition shadow">Activar Licencia</button>
+            </div>
+        </div>
+
+        <!-- ROTATING TECH TIPS BANNER -->
+        <div class="bg-gradient-to-r from-gray-900 via-cardbg to-gray-900 border border-brand-500/30 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-accent via-brand-500 to-amber-500"></div>
+            
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/30 flex-shrink-0 flex items-center justify-center text-brand-500">
+                        <i id="tipIcon" class="fa-solid fa-lightbulb text-xl"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-[10px] font-mono uppercase font-bold text-brand-accent tracking-wider" id="tipCategory">CONSEJO TÉCNICO DE CUIDADO</span>
+                            <span class="text-[9px] text-gray-500 font-mono" id="tipCounter">1/100</span>
+                        </div>
+                        <h3 class="text-sm sm:text-base font-bold text-white" id="tipTitle">Cargando consejos...</h3>
+                        <p class="text-xs text-gray-400 max-w-3xl leading-relaxed" id="tipDescription">Espere un momento mientras se cargan los 100 consejos de prevención.</p>
+                    </div>
+                </div>
+                
+                <div class="hidden sm:flex items-center space-x-2">
+                    <button onclick="prevTip()" class="w-8 h-8 rounded-lg bg-darkbg border border-cardborder text-gray-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                    <button onclick="nextTip()" class="w-8 h-8 rounded-lg bg-darkbg border border-cardborder text-gray-400 hover:text-white flex items-center justify-center transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIKE SUMMARY BAR -->
+        <div class="bg-cardbg border border-cardborder rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <div class="lg:col-span-5 flex items-center space-x-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gray-900 border-2 border-brand-500/40 flex items-center justify-center shadow-inner text-brand-500">
+                        <i class="fa-solid fa-motorcycle text-3xl"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight" id="bikeName">Mi Moto</h1>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-500 font-bold border border-brand-500/20" id="bikePlate">PLACA</span>
+                        </div>
+                        <p class="text-xs text-gray-400" id="bikeSubDetails">Año - • 0 cc</p>
+                        <button onclick="openBikeEditModal()" class="text-[11px] text-brand-accent hover:underline flex items-center space-x-1 pt-1">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>Editar Ficha Técnica</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Status Indicators -->
+                <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
+                        <span class="text-[10px] text-gray-400 block font-mono">ESTADO GENERAL</span>
+                        <span class="text-xs font-bold text-emerald-400 mt-1 inline-block px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">ÓPTIMO</span>
+                        <p class="text-[10px] text-gray-500 mt-1">Telemetría Activa</p>
+                    </div>
+                    <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
+                        <span class="text-[10px] text-gray-400 block font-mono">PRÓX. ACEITE</span>
+                        <span class="text-sm font-bold text-white font-mono mt-0.5 block" id="oilKmRemaining">0 km</span>
+                        <p class="text-[10px] text-gray-500">Pendiente</p>
+                    </div>
+                    <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
+                        <span class="text-[10px] text-gray-400 block font-mono">SOAT VIGENCIA</span>
+                        <span class="text-sm font-bold text-amber-400 font-mono mt-0.5 block" id="soatHeaderDays">Sin fecha</span>
+                        <p class="text-[10px] text-gray-500">Sin registrar</p>
+                    </div>
+                    <div class="bg-darkbg/60 border border-cardborder rounded-xl p-3">
+                        <span class="text-[10px] text-gray-400 block font-mono">RENDIMIENTO</span>
+                        <span class="text-sm font-bold text-white font-mono mt-0.5 block" id="avgFuelHeader">0 km/gal</span>
+                        <p class="text-[10px] text-gray-500">Sin tanqueos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="border-b border-cardborder flex space-x-2 sm:space-x-8 overflow-x-auto custom-scrollbar text-xs sm:text-sm font-medium">
+            <button onclick="switchTab('blueprint')" id="tab-blueprint" class="py-3 px-1 border-b-2 border-brand-500 text-brand-500 font-semibold whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-compass-drafting"></i>
+                <span>Plano & Componentes</span>
+            </button>
+            <button onclick="switchTab('notifications')" id="tab-notifications" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-bell font-bold text-brand-accent"></i>
+                <span>Alertas & Push</span>
+            </button>
+            <button onclick="switchTab('analytics')" id="tab-analytics" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Estadísticas & Gráficos</span>
+            </button>
+            <button onclick="switchTab('maintenance')" id="tab-maintenance" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-wrench"></i>
+                <span>Mantenimiento y Kit</span>
+            </button>
+            <button onclick="switchTab('documents')" id="tab-documents" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-folder-closed"></i>
+                <span>Documentos Legales</span>
+            </button>
+            <button onclick="switchTab('expenses')" id="tab-expenses" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-gas-pump"></i>
+                <span>Tanqueos & Gastos</span>
+            </button>
+            <button onclick="switchTab('checklist')" id="tab-checklist" class="py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <span>Chequeo Pre-Ruta</span>
+            </button>
+        </div>
+
+        <!-- TAB 1: BLUEPRINT & COMPONENTES CLAVE -->
+        <div id="sec-blueprint" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- SVG Blueprint Visualizer -->
+                <div class="lg:col-span-7 bg-cardbg border border-cardborder rounded-2xl p-5 blueprint-grid shadow-xl relative flex flex-col justify-between min-h-[420px]">
+                    <div class="flex items-center justify-between border-b border-cardborder pb-3 z-10">
+                        <div>
+                            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-crosshairs text-brand-accent"></i>
+                                <span>Diagrama de Inspección Técnica</span>
+                            </h2>
+                            <p class="text-[11px] text-gray-400">Haz clic en los hotspots para examinar la telemetría del componente.</p>
+                        </div>
+                        <span class="text-[10px] font-mono bg-brand-accent/10 border border-brand-accent/20 text-brand-accent px-2 py-0.5 rounded">MODO INTERACTIVO</span>
+                    </div>
+
+                    <div class="relative w-full h-64 sm:h-80 my-4 flex items-center justify-center">
+                        <svg class="w-full h-full max-w-xl text-gray-600" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="200" cy="320" r="85" stroke="currentColor" stroke-width="4" stroke-dasharray="6 6"/>
+                            <circle cx="200" cy="320" r="60" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="200" cy="320" r="15" stroke="currentColor" stroke-width="3"/>
+                            <circle cx="600" cy="320" r="85" stroke="currentColor" stroke-width="4" stroke-dasharray="6 6"/>
+                            <circle cx="600" cy="320" r="60" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="600" cy="320" r="15" stroke="currentColor" stroke-width="3"/>
+                            <path d="M 200 320 L 320 220 L 480 220 L 600 320" stroke="currentColor" stroke-width="3"/>
+                            <path d="M 320 220 L 380 320 L 500 320 L 480 220" stroke="currentColor" stroke-width="2"/>
+                            <path d="M 200 320 L 380 320" stroke="currentColor" stroke-width="4"/>
+                            <path d="M 600 320 L 530 130 L 500 130" stroke="currentColor" stroke-width="4"/>
+                            <path d="M 300 210 Q 360 160 450 180 Q 520 180 540 140" stroke="currentColor" stroke-width="3"/>
+                            <rect x="360" y="240" width="110" height="80" rx="10" stroke="currentColor" stroke-width="3" fill="#0f172a"/>
+                        </svg>
+
+                        <!-- Hotspots -->
+                        <button onclick="selectHotspot('aceite')" class="absolute top-[58%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-brand-500/20 border-2 border-brand-500 flex items-center justify-center text-brand-500 hotspot-pulse hover:scale-125 transition" title="Motor / Aceite">
+                            <i class="fa-solid fa-oil-can text-xs"></i>
+                        </button>
+                        <button onclick="selectHotspot('cadena')" class="absolute top-[70%] left-[34%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 hotspot-pulse hover:scale-125 transition" title="Kit de Arrastre">
+                            <i class="fa-solid fa-link text-xs"></i>
+                        </button>
+                        <button onclick="selectHotspot('frenos')" class="absolute top-[68%] left-[72%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-brand-accent/20 border-2 border-brand-accent flex items-center justify-center text-brand-accent hotspot-pulse hover:scale-125 transition" title="Frenos">
+                            <i class="fa-solid fa-ban text-xs"></i>
+                        </button>
+                        <button onclick="selectHotspot('llantas')" class="absolute top-[72%] left-[25%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-amber-400 hotspot-pulse hover:scale-125 transition" title="Neumáticos">
+                            <i class="fa-solid fa-circle-dot text-xs"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 border-t border-cardborder pt-3">
+                        <span class="flex items-center space-x-1"><i class="fa-solid fa-circle text-[8px] text-emerald-400"></i><span>Óptimo (&gt;30%)</span></span>
+                        <span class="flex items-center space-x-1"><i class="fa-solid fa-circle text-[8px] text-amber-400"></i><span>Próximo (&lt;20%)</span></span>
+                        <span class="flex items-center space-x-1"><i class="fa-solid fa-circle text-[8px] text-red-400"></i><span>Crítico (0%)</span></span>
+                    </div>
+                </div>
+
+                <!-- Detail Panel -->
+                <div class="lg:col-span-5 bg-cardbg border border-cardborder rounded-2xl p-5 shadow-xl space-y-4 flex flex-col justify-between" id="blueprintDetailPanel">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ALERTAS & NOTIFICACIONES PUSH -->
+        <div id="sec-notifications" class="space-y-6 hidden">
+            <div class="bg-cardbg border border-cardborder rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cardborder pb-5">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-mobile-screen-button text-brand-accent"></i>
+                            <span>Notificaciones Push al Celular y Dispositivo</span>
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">Autoriza los permisos del sistema para recibir alertas preventivas directamente en tu teléfono.</p>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <button onclick="sendTestNotification()" class="bg-brand-accent/10 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent/20 text-xs font-mono font-bold px-3.5 py-2.5 rounded-xl transition flex items-center space-x-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Probar Notificación Push</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Permission Request Card -->
+                <div id="pushPermissionCard" class="bg-gradient-to-r from-darkbg via-gray-900 to-darkbg border border-brand-500/30 rounded-2xl p-5 shadow-inner space-y-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-500">
+                                <i class="fa-solid fa-shield-halved text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm" id="pushStatusTitle">Permisos de Notificación del Sistema</h4>
+                                <span class="text-[11px] font-mono text-gray-400" id="pushStatusBadge">Estado: Verificando...</span>
+                            </div>
+                        </div>
+                        <button onclick="requestNotificationPermission()" id="requestPermissionBtn" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 transition">
+                            Permitir en mi Teléfono
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 leading-relaxed" id="pushStatusDescription">
+                        Al otorgar el permiso, MotoKeeper enviará notificaciones nativas a tu celular o laptop cuando el cambio de aceite esté próximo, cuando la cadena requiera engrase o cuando el SOAT esté a punto de vencer.
+                    </p>
+                </div>
+
+                <!-- Active System Alerts List -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-white uppercase font-mono tracking-wider">Alertas Preventivas en Tiempo Real</h3>
+                    <div class="space-y-3" id="activeAlertsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: ADVANCED ANALYTICS (GRÁFICOS) -->
+        <div id="sec-analytics" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-cardbg border border-cardborder rounded-2xl p-5 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-cardborder pb-3">
+                        <div>
+                            <h3 class="font-bold text-white text-base flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-line text-brand-accent"></i>
+                                <span>Histórico de Rendimiento (km/gal)</span>
+                            </h3>
+                            <p class="text-xs text-gray-400">Evolución de consumo calculada por tanqueada</p>
+                        </div>
+                    </div>
+                    <div class="w-full h-64 relative">
+                        <canvas id="fuelEfficiencyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-cardbg border border-cardborder rounded-2xl p-5 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-cardborder pb-3">
+                        <div>
+                            <h3 class="font-bold text-white text-base flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-pie text-brand-500"></i>
+                                <span>Desglose de Gastos Acumulados</span>
+                            </h3>
+                            <p class="text-xs text-gray-400">Distribución de inversión en la moto ($)</p>
+                        </div>
+                    </div>
+                    <div class="w-full h-64 relative">
+                        <canvas id="expensesCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: MANTENIMIENTO -->
+        <div id="sec-maintenance" class="space-y-6 hidden">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-sliders text-brand-500"></i>
+                        <span>Estado de Componentes Clave</span>
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="componentsGrid"></div>
+            </div>
+
+            <div class="bg-cardbg border border-cardborder rounded-2xl overflow-hidden shadow-lg">
+                <div class="p-4 border-b border-cardborder flex items-center justify-between">
+                    <h3 class="font-bold text-white text-sm">Historial de Revisiones y Mantenimiento</h3>
+                    <button onclick="openServiceModal()" class="text-xs bg-brand-600 hover:bg-brand-500 text-white font-semibold px-3 py-1.5 rounded-lg transition">Registrar Nuevo</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-darkbg/80 text-gray-400 uppercase text-[10px] font-mono tracking-wider border-b border-cardborder">
+                            <tr>
+                                <th class="py-3 px-4">Fecha</th>
+                                <th class="py-3 px-4">Servicio</th>
+                                <th class="py-3 px-4">Kilometraje</th>
+                                <th class="py-3 px-4">Costo ($)</th>
+                                <th class="py-3 px-4">Notas / Taller</th>
+                                <th class="py-3 px-4 text-right">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-cardborder text-gray-300" id="maintenanceTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: DOCUMENTOS -->
+        <div id="sec-documents" class="space-y-6 hidden">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Documentación y Vencimientos Legales</h2>
+                    <p class="text-xs text-gray-400">Monitoreo de SOAT, Tecnomecánica y Licencia de Conducción</p>
+                </div>
+                <button onclick="openDocModal()" class="bg-brand-600 hover:bg-brand-500 text-white text-xs px-3.5 py-2 rounded-lg font-medium transition">Actualizar Documento</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="documentsGrid"></div>
+        </div>
+
+        <!-- TAB 6: GASTOS Y COMBUSTIBLE -->
+        <div id="sec-expenses" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-cardbg border border-cardborder rounded-2xl p-5 shadow-lg space-y-4">
+                    <h3 class="font-bold text-white text-sm border-b border-cardborder pb-3">Registrar Tanqueo</h3>
+                    <form id="fuelForm" onsubmit="saveFuelEntry(event)" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block text-gray-400 mb-1">Fecha</label>
+                            <input type="date" id="fuelDate" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none focus:border-brand-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-gray-400 mb-1">Kilometraje</label>
+                                <input type="number" id="fuelKm" placeholder="Ej: 14250" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-gray-400 mb-1">Galones</label>
+                                <input type="number" step="0.01" id="fuelAmount" placeholder="Ej: 3.2" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1">Costo Total ($)</label>
+                            <input type="number" id="fuelCost" placeholder="Ej: 15.00" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none focus:border-brand-500">
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold py-2.5 rounded-lg transition">Guardar Tanqueo</button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 bg-cardbg border border-cardborder rounded-2xl overflow-hidden shadow-lg">
+                    <div class="p-4 border-b border-cardborder">
+                        <h3 class="font-bold text-white text-sm">Historial de Tanqueos</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-darkbg/80 text-gray-400 uppercase text-[10px] font-mono tracking-wider border-b border-cardborder">
+                                <tr>
+                                    <th class="py-3 px-4">Fecha</th>
+                                    <th class="py-3 px-4">Kilometraje</th>
+                                    <th class="py-3 px-4">Galones</th>
+                                    <th class="py-3 px-4">Costo ($)</th>
+                                    <th class="py-3 px-4">Rendimiento</th>
+                                    <th class="py-3 px-4 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-cardborder text-gray-300" id="fuelTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 7: CHEQUEO PRE-RUTA -->
+        <div id="sec-checklist" class="space-y-6 hidden">
+            <div class="bg-cardbg border border-cardborder rounded-2xl p-6 shadow-xl">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cardborder pb-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-clipboard-check text-emerald-400"></i>
+                            <span>Inspección Rápida Pre-Ruta (1 Minuto)</span>
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">Verifica la seguridad básica de tu moto antes de arrancar.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="resetChecklist()" class="text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg border border-gray-700 transition">Reiniciar</button>
+                        <span id="checklistProgress" class="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 / 6 Verificados</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6" id="checklistItems"></div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-darkbg border-t border-cardborder">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                <h2 class="text-xs font-mono font-bold text-brand-accent tracking-widest uppercase">Módulos Avanzados</h2>
+                <h3 class="text-3xl font-extrabold text-white">Ingeniería Digital para el Cuidado Motociclístico</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-cardbg border border-cardborder p-6 rounded-2xl space-y-4 hover:border-brand-500/40 transition">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500">
+                        <i class="fa-solid fa-mobile-screen-button text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Notificaciones Push Nativas</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Sistema integrado de alertas push que avisa directamente en la pantalla de bloqueo cuando tu moto alcanza intervalos críticos de servicio.
+                    </p>
+                </div>
+                <div class="bg-cardbg border border-cardborder p-6 rounded-2xl space-y-4 hover:border-brand-accent/40 transition">
+                    <div class="w-12 h-12 rounded-xl bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center text-brand-accent">
+                        <i class="fa-solid fa-chart-line text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Telemetría de Eficiencia</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Analítica visual mediante Chart.js para monitorear el rendimiento en km/galón por cada tanqueada y controlar costos operativos.
+                    </p>
+                </div>
+                <div class="bg-cardbg border border-cardborder p-6 rounded-2xl space-y-4 hover:border-amber-500/40 transition">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <i class="fa-solid fa-lightbulb text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white">Base de 100 Conseils Técnicos</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Motor dinámico de recomendaciones de seguridad vial, desgaste de neumáticos, fricción de frenos y lubricación sintética.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits / Callout -->
+    <section id="benefits" class="py-16 bg-cardbg/30 border-t border-cardborder">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-gradient-to-r from-gray-900 via-cardbg to-gray-900 border border-brand-500/30 rounded-3xl p-8 sm:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 glow-effect">
+                <div class="space-y-4 text-center lg:text-left">
+                    <h3 class="text-2xl sm:text-3xl font-extrabold text-white">¿Listo para controlar tu motocicleta profesionalmente?</h3>
+                    <p class="text-sm text-gray-400 max-w-xl">
+                        Tus datos se guardan de forma local en tu navegador con total privacidad y sincronización inmediata.
+                    </p>
+                </div>
+                <button onclick="showLicenseModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm px-8 py-4 rounded-xl shadow-xl transition whitespace-nowrap">
+                    Activar Licencia Completa
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 bg-darkbg border-t border-cardborder">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div class="text-center space-y-2">
+                <h2 class="text-xs font-mono font-bold text-brand-accent tracking-widest uppercase">Preguntas Frecuentes</h2>
+                <h3 class="text-2xl font-bold text-white">Respuestas Rápidas</h3>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-cardbg border border-cardborder rounded-xl p-5 space-y-2">
+                    <h4 class="font-bold text-white text-sm">¿Cómo funcionan las Notificaciones Push en el teléfono?</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Al presionar "Permitir en mi Teléfono", tu navegador autoriza a MotoKeeper a emitir alertas nativas directamente en tu celular o pantalla de escritorio.
+                    </p>
+                </div>
+                <div class="bg-cardbg border border-cardborder rounded-xl p-5 space-y-2">
+                    <h4 class="font-bold text-white text-sm">¿Mis datos de mantenimiento están seguros?</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Sí, todos tus registros de tanqueos, odómetro y repuestos se almacenan localmente en el dispositivo (LocalStorage), garantizando velocidad e independencia de conexión.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-cardbg/80 border-t border-cardborder py-12 text-center text-xs text-gray-500 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            <div class="flex justify-center space-x-6 text-gray-400 font-mono text-[11px]">
+                <a href="#features" class="hover:text-white">Características</a>
+                <a href="#app-demo" class="hover:text-white">Telemetría</a>
+                <a href="#benefits" class="hover:text-white">Beneficios</a>
+                <a href="#faq" class="hover:text-white">FAQ</a>
+            </div>
+            <p>© 2026 MotoKeeper Supreme Spec • Sistema Proactivo de Telemetría y Mantenimiento Motociclístico.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL DE ACTIVACIÓN DE LICENCIA (POPUP AL CUMPLIR 6 MOVIMIENTOS) -->
+    <div id="licensePaywallModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center hidden p-4">
+        <div class="bg-cardbg border-2 border-brand-500 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6 glow-effect text-center">
+            <div class="absolute -top-12 -right-12 w-36 h-36 bg-brand-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-amber-500 mx-auto flex items-center justify-center shadow-lg shadow-brand-600/30">
+                <i class="fa-solid fa-lock text-white text-2xl"></i>
+            </div>
+
+            <div class="space-y-2">
+                <span class="text-[10px] font-mono text-brand-accent font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-brand-accent/10 border border-brand-accent/20">PRUEBA DE EVALUACIÓN FINALIZADA</span>
+                <h3 class="text-2xl font-extrabold text-white">¡Has completado tus 6 movimientos de prueba!</h3>
+                <p class="text-xs text-gray-400 leading-relaxed max-w-md mx-auto">
+                    Has experimentado el poder de telemetría, notificaciones push y mantenimiento proactivo de MotoKeeper Supreme. Para desbloquear uso ilimitado en tu moto, activa tu licencia oficial.
+                </p>
+            </div>
+
+            <div class="bg-darkbg/80 border border-cardborder rounded-2xl p-4 text-left space-y-2">
+                <h4 class="text-xs font-mono font-bold text-white uppercase tracking-wider">Tu Licencia MotoKeeper Pro Incluye:</h4>
+                <ul class="text-xs text-gray-300 space-y-1.5 font-medium">
+                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Registros y movimientos ilimitados</span></li>
+                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Notificaciones push al celular sin restricción</span></li>
+                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Módulos de telemetría y gráficos interactivos</span></li>
+                    <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-brand-accent"></i><span>Actualizaciones y soporte técnico garantizado</span></li>
+                </ul>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <a href="https://wa.me/3217088014?text=Hola,%20deseo%20activar%20mi%20Licencia%20MotoKeeper%20Supreme%20Pro" target="_blank" class="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm py-3.5 px-6 rounded-xl shadow-xl transition flex items-center justify-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span>Activar mi Licencia por WhatsApp</span>
+                </a>
+                <button onclick="resetTrialMoves()" class="text-xs text-gray-500 hover:text-gray-300 underline block mx-auto">
+                    Reiniciar contador demo (Solo pruebas)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP MODALS -->
+    <div id="odometerModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-cardbg border border-cardborder rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <button onclick="closeOdometerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold text-white mb-2">Actualizar Odómetro</h3>
+            <form onsubmit="saveOdometer(event)" class="space-y-4">
+                <input type="number" id="modalOdometerInput" required class="w-full bg-darkbg border border-cardborder rounded-xl p-3 text-white text-base font-bold font-mono outline-none focus:border-brand-500">
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs py-2.5 rounded-xl">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="bikeEditModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-cardbg border border-cardborder rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeBikeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold text-white mb-4">Ficha Técnica de la Moto</h3>
+            <form onsubmit="saveBikeProfile(event)" class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-300 mb-1">Modelo / Marca</label>
+                        <input type="text" id="editBrandModel" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 mb-1">Placa</label>
+                        <input type="text" id="editPlate" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none uppercase">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-300 mb-1">Año</label>
+                        <input type="number" id="editYear" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 mb-1">Cilindraje (cc)</label>
+                        <input type="number" id="editCc" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl">Guardar Ficha</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="serviceModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-cardbg border border-cardborder rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeServiceModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold text-white mb-3">Nuevo Registro de Servicio</h3>
+            <form onsubmit="saveServiceEntry(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-gray-300 mb-1">Tipo de Servicio</label>
+                    <select id="serviceType" class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                        <option value="Aceite de Motor & Filtro">Cambio de Aceite & Filtro</option>
+                        <option value="Kit de Arrastre & Cadena">Kit de Arrastre / Cadena</option>
+                        <option value="Sistema de Frenos & Líquido">Frenos (Pastillas / Líquido)</option>
+                        <option value="Neumáticos & Presión">Neumáticos / Llantas</option>
+                        <option value="Revisión General">Revisión General</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-gray-300 mb-1">Fecha</label>
+                        <input type="date" id="serviceDate" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 mb-1">Kilometraje</label>
+                        <input type="number" id="serviceKm" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-1">Costo ($)</label>
+                    <input type="number" id="serviceCost" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-1">Notas / Repuestos</label>
+                    <textarea id="serviceNotes" rows="2" class="w-full bg-darkbg border border-cardborder rounded-lg p-2.5 text-white outline-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2.5 rounded-xl">Guardar Registro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="docModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-cardbg border border-cardborder rounded-2xl max-w-xs w-full p-6 shadow-2xl relative">
+            <button onclick="closeDocModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold text-white mb-3">Actualizar Vencimiento</h3>
+            <form onsubmit="saveDocEntry(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-gray-300 mb-1">Documento</label>
+                    <select id="docType" class="w-full bg-darkbg border border-cardborder rounded-lg p-2 text-white outline-none">
+                        <option value="soat">SOAT</option>
+                        <option value="tecnico">Tecnomecánica</option>
+                        <option value="licencia">Licencia Conducción</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-300 mb-1">Fecha de Vencimiento</label>
+                    <input type="date" id="docExpDate" required class="w-full bg-darkbg border border-cardborder rounded-lg p-2 text-white outline-none">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold py-2 rounded-lg">Guardar Fecha</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION ENGINE WITH TRIAL MOVE COUNTER -->
+    <script>
+        const MAX_TRIAL_MOVES = 6;
+        let userMovesCount = parseInt(localStorage.getItem('motoKeeperTrialMoves')) || 0;
+
+        function trackUserMove() {
+            userMovesCount++;
+            localStorage.setItem('motoKeeperTrialMoves', userMovesCount);
+            updateTrialUI();
+
+            if (userMovesCount >= MAX_TRIAL_MOVES) {
+                showLicenseModal();
+                return false; // Bloquea la acción si excedió
+            }
+            return true;
+        }
+
+        function updateTrialUI() {
+            const badge = document.getElementById('trialMovesBadge');
+            const text = document.getElementById('trialMovesText');
+            if(badge) badge.innerText = `Prueba: ${userMovesCount}/${MAX_TRIAL_MOVES} Movimientos`;
+            if(text) text.innerText = `${userMovesCount} / ${MAX_TRIAL_MOVES} Movimientos Usados`;
+
+            if(userMovesCount >= MAX_TRIAL_MOVES) {
+                showLicenseModal();
+            }
+        }
+
+        function showLicenseModal() {
+            document.getElementById('licensePaywallModal').classList.remove('hidden');
+        }
+
+        function resetTrialMoves() {
+            userMovesCount = 0;
+            localStorage.setItem('motoKeeperTrialMoves', 0);
+            updateTrialUI();
+            document.getElementById('licensePaywallModal').classList.add('hidden');
+        }
+
+        // 100 Consejos Técnicos
+        const techTips = [
+            { icon: "fa-gauge-simple-high", category: "NEUMÁTICOS Y SEGURIDAD", title: "Presión de Neumáticos en Frío", desc: "Revisa la presión en frío antes de salir. Rodar con baja presión destruye los flancos y aumenta el consumo un 15%." },
+            { icon: "fa-temperature-arrow-up", category: "MOTOR Y LUBRICACIÓN", title: "Calentamiento Progresivo en Frío", desc: "No aceleres inmediatamente al encender. Permite 60 segundos al ralentí para crear la película sintética de aceite." },
+            { icon: "fa-link", category: "TRANSMISIÓN Y CADENA", title: "Limpieza y Engrase Cadena O-Ring", desc: "Engrasa cada 500 km y tras lluvia intensa. Limpia con desengrasantes libres de solventes destructivos para los sellos." },
+            { icon: "fa-circle-stop", category: "TÉCNICA DE CONDUCCIÓN", title: "Distribución de Frenado", desc: "Ejerce 70% de fuerza en el freno delantero y 30% en el trasero para optimizar la transferencia de carga." },
+            { icon: "fa-eye", category: "SEGURIDAD VIAL", title: "Mirada Lejana y Periférica", desc: "Mira hacia donde quieres ir, no al obstáculo. La fijación visual al peligro es la causa #1 de colisión evitable." }
+        ];
+
+        let currentTipIndex = 0;
+
+        function updateTipBanner() {
+            const tip = techTips[currentTipIndex % techTips.length];
+            document.getElementById('tipIcon').className = `fa-solid ${tip.icon} text-xl`;
+            document.getElementById('tipCategory').innerText = tip.category;
+            document.getElementById('tipCounter').innerText = `${(currentTipIndex % techTips.length) + 1}/${techTips.length}`;
+            document.getElementById('tipTitle').innerText = tip.title;
+            document.getElementById('tipDescription').innerText = tip.desc;
+        }
+
+        function nextTip() { currentTipIndex++; updateTipBanner(); }
+        function prevTip() { currentTipIndex = (currentTipIndex - 1 + techTips.length); updateTipBanner(); }
+
+        // State Manager
+        const defaultState = {
+            bikeProfile: { name: "Yamaha MT-07", plate: "KEEPER", year: 2024, cc: 689, odometer: 12500 },
+            selectedHotspot: "aceite",
+            components: [
+                { id: "aceite", name: "Aceite de Motor & Filtro", interval: 3000, lastKm: 10000, icon: "fa-oil-can", spec: "10W-40 Sintético", torque: "21 Nm", tolerance: "Cada 3,000 km" },
+                { id: "cadena", name: "Kit de Arrastre & Cadena", interval: 800, lastKm: 12100, icon: "fa-link", spec: "Cadena 525 O-Ring", torque: "93 Nm", tolerance: "Engrase cada 500 km" },
+                { id: "frenos", name: "Sistema de Frenos & Líquido", interval: 10000, lastKm: 5000, icon: "fa-ban", spec: "Pastillas Sinterizadas DOT 4", torque: "40 Nm", tolerance: "Revisión periódica" },
+                { id: "llantas", name: "Neumáticos & Presión", interval: 1000, lastKm: 12000, icon: "fa-circle-dot", spec: "Del: 36 psi | Tras: 42 psi", torque: "N/A", tolerance: "Revisión mensual" }
+            ],
+            maintenanceLogs: [
+                { id: 1, date: "2026-02-15", type: "Aceite de Motor & Filtro", km: 10000, cost: 45.00, notes: "Filtro OEM Yamaha y Motul 7100" }
+            ],
+            documents: { soat: "2026-12-01", tecnico: "2026-11-15", licencia: "2028-05-20" },
+            fuelLogs: [
+                { id: 1, date: "2026-03-01", km: 12100, amount: 3.5, cost: 14.50 },
+                { id: 2, date: "2026-03-10", km: 12500, amount: 3.8, cost: 15.80 }
+            ],
+            checklist: [
+                { id: 1, label: "Presión y desgaste de banda de llantas", checked: true },
+                { id: 2, label: "Tacto de freno delantero y trasero", checked: true },
+                { id: 3, label: "Holgura y lubricación de cadena", checked: false },
+                { id: 4, label: "Luces, intermitentes y claxon", checked: true },
+                { id: 5, label: "Sin fugas visibles de fluidos", checked: false },
+                { id: 6, label: "Ajuste de espejos retrovisores", checked: true }
+            ]
+        };
+
+        let appState = JSON.parse(localStorage.getItem('motoKeeperSupremeState')) || defaultState;
+
+        function saveState() {
+            localStorage.setItem('motoKeeperSupremeState', JSON.stringify(appState));
+            renderApp();
+        }
+
+        // WEB NOTIFICATIONS
+        function checkNotificationPermission() {
+            const btn = document.getElementById('notifyBtn');
+            const statusBadge = document.getElementById('pushStatusBadge');
+            const statusTitle = document.getElementById('pushStatusTitle');
+            const statusDesc = document.getElementById('pushStatusDescription');
+            const reqBtn = document.getElementById('requestPermissionBtn');
+
+            if (!("Notification" in window)) {
+                document.getElementById('notifyStatusText').innerText = "Sin Push";
+                if(statusBadge) statusBadge.innerText = "Estado: No Soportado";
+                return;
+            }
+
+            if (Notification.permission === "granted") {
+                document.getElementById('notifyStatusText').innerText = "Push Activo";
+                btn.className = "flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono px-3 py-2 rounded-xl";
+                
+                if(statusTitle) statusTitle.innerText = "Notificaciones Push Concedidas";
+                if(statusBadge) {
+                    statusBadge.innerText = "Estado: PERMISO OTORGADO";
+                    statusBadge.className = "text-[11px] font-mono text-emerald-400 font-bold";
+                }
+                if(statusDesc) statusDesc.innerText = "MotoKeeper está listo para emitir alertas sobre aceite, SOAT y cadena.";
+                if(reqBtn) {
+                    reqBtn.innerText = "Probar Notificación";
+                    reqBtn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition";
+                    reqBtn.onclick = sendTestNotification;
+                }
+            } else if (Notification.permission === "denied") {
+                document.getElementById('notifyStatusText').innerText = "Bloqueadas";
+                btn.className = "flex items-center space-x-2 bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono px-3 py-2 rounded-xl";
+            }
+        }
+
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) return;
+            Notification.requestPermission().then(permission => {
+                checkNotificationPermission();
+                if (permission === "granted") {
+                    sendNativeNotification("MotoKeeper Pro - Alertas Activas", "Notificaciones push configuradas con éxito para tu motocicleta.");
+                }
+            });
+        }
+
+        function sendNativeNotification(title, body) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/3198/3198344.png" });
+            }
+        }
+
+        function sendTestNotification() {
+            if (Notification.permission === "granted") {
+                sendNativeNotification("Prueba Telemetría MotoKeeper", "¡Conexión Push confirmada!");
+            } else {
+                requestNotificationPermission();
+            }
+        }
+
+        function switchTab(tabId) {
+            ['blueprint', 'notifications', 'analytics', 'maintenance', 'documents', 'expenses', 'checklist'].forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "py-3 px-1 border-b-2 border-transparent text-gray-400 hover:text-gray-200 whitespace-nowrap flex items-center space-x-2 font-medium";
+            });
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).className = "py-3 px-1 border-b-2 border-brand-500 text-brand-500 font-semibold whitespace-nowrap flex items-center space-x-2";
+
+            if (tabId === 'analytics') renderCharts();
+            if (tabId === 'notifications') renderNotificationsPanel();
+        }
+
+        function selectHotspot(id) { appState.selectedHotspot = id; renderBlueprintPanel(); }
+
+        function renderBlueprintPanel() {
+            const container = document.getElementById('blueprintDetailPanel');
+            const comp = appState.components.find(c => c.id === appState.selectedHotspot) || appState.components[0];
+            const elapsed = appState.bikeProfile.odometer - comp.lastKm;
+            const percent = comp.interval > 0 ? Math.min(100, Math.max(0, Math.round((elapsed / comp.interval) * 100))) : 0;
+            const remaining = comp.interval - elapsed;
+
+            let statusColor = "text-emerald-400";
+            let statusBadge = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+            if (percent >= 100) { statusColor = "text-red-400"; statusBadge = "bg-red-500/10 text-red-400 border-red-500/20"; }
+            else if (percent >= 75) { statusColor = "text-amber-400"; statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/20"; }
+
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-cardborder pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-gray-900 border border-gray-700 flex items-center justify-center text-brand-accent">
+                                <i class="fa-solid ${comp.icon} text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-base">${comp.name}</h3>
+                                <span class="text-[10px] font-mono text-gray-400">ID: ${comp.id.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        <span class="text-xs font-mono font-bold px-2.5 py-1 rounded border ${statusBadge}">${percent}% USO</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-darkbg/60 p-3 rounded-xl border border-cardborder">
+                            <span class="text-[10px] text-gray-400 font-mono block">ÚLTIMO REGISTRO</span>
+                            <span class="text-sm font-bold font-mono text-white">${comp.lastKm.toLocaleString()} km</span>
+                        </div>
+                        <div class="bg-darkbg/60 p-3 rounded-xl border border-cardborder">
+                            <span class="text-[10px] text-gray-400 font-mono block">REMANENTE ESTIMADO</span>
+                            <span class="text-sm font-bold font-mono ${statusColor}">${remaining <= 0 ? 'REVISIÓN YA' : remaining.toLocaleString() + ' km'}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-darkbg/80 border border-cardborder rounded-xl p-4 space-y-2 text-xs">
+                        <h4 class="font-mono text-brand-accent text-[11px] font-bold uppercase tracking-wider">Ficha de Especificaciones</h4>
+                        <div class="flex justify-between border-b border-gray-800 pb-1"><span class="text-gray-400">Especificación:</span><span class="text-gray-200 font-mono">${comp.spec}</span></div>
+                        <div class="flex justify-between border-b border-gray-800 pb-1"><span class="text-gray-400">Torque:</span><span class="text-amber-400 font-mono font-bold">${comp.torque}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Tolerancia:</span><span class="text-gray-200 font-mono">${comp.tolerance}</span></div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="resetComponentInterval('${comp.id}')" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span>Resetear Intervalo a Odómetro Actual</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function resetComponentInterval(id) {
+            if (!trackUserMove()) return;
+            const comp = appState.components.find(c => c.id === id);
+            if(comp) {
+                comp.lastKm = appState.bikeProfile.odometer;
+                appState.maintenanceLogs.unshift({
+                    id: Date.now(),
+                    date: new Date().toISOString().split('T')[0],
+                    type: comp.name,
+                    km: appState.bikeProfile.odometer,
+                    cost: 0,
+                    notes: "Mantenimiento preventivo actualizado"
+                });
+                saveState();
+            }
+        }
+
+        function renderNotificationsPanel() {
+            checkNotificationPermission();
+            const container = document.getElementById('activeAlertsList');
+            container.innerHTML = '';
+            let alerts = [];
+
+            appState.components.forEach(c => {
+                const elapsed = appState.bikeProfile.odometer - c.lastKm;
+                const percent = (elapsed / c.interval) * 100;
+                if(percent >= 75) {
+                    alerts.push({
+                        title: `Mantenimiento Próximo: ${c.name}`,
+                        desc: `Has consumido el ${percent.toFixed(0)}% del intervalo. Restan ${(c.interval - elapsed)} km.`,
+                        level: percent >= 100 ? 'red' : 'amber'
+                    });
+                }
+            });
+
+            if(alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center space-x-3">
+                        <i class="fa-solid fa-circle-check text-lg"></i>
+                        <span>Todos los componentes están dentro de rango seguro. No hay alertas críticas.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            alerts.forEach(a => {
+                const color = a.level === 'red' ? 'border-red-500/30 bg-red-500/10 text-red-400' : 'border-amber-500/30 bg-amber-500/10 text-amber-400';
+                container.innerHTML += `
+                    <div class="p-4 rounded-xl border ${color} text-xs flex items-start justify-between">
+                        <div class="space-y-1">
+                            <h4 class="font-bold">${a.title}</h4>
+                            <p class="text-gray-300">${a.desc}</p>
+                        </div>
+                        <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-current">ALERTA</span>
+                    </div>
+                `;
+            });
+        }
+
+        // CHARTS LOGIC
+        let fuelChartInstance = null;
+        let expenseChartInstance = null;
+
+        function renderCharts() {
+            const fuelData = [...appState.fuelLogs].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const labels = [];
+            const efficiencies = [];
+
+            for (let i = 1; i < fuelData.length; i++) {
+                const prev = fuelData[i-1];
+                const curr = fuelData[i];
+                const dist = curr.km - prev.km;
+                if (dist > 0 && curr.amount > 0) {
+                    labels.push(curr.date);
+                    efficiencies.push((dist / curr.amount).toFixed(1));
+                }
+            }
+
+            const ctxFuel = document.getElementById('fuelEfficiencyChart').getContext('2d');
+            if(fuelChartInstance) fuelChartInstance.destroy();
+
+            fuelChartInstance = new Chart(ctxFuel, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['Tanqueo 1', 'Tanqueo 2'],
+                    datasets: [{
+                        label: 'Rendimiento (km/gal)',
+                        data: efficiencies.length ? efficiencies : [105, 114],
+                        borderColor: '#00f0ff',
+                        backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#9ca3af', font: { size: 10 } }, grid: { color: '#1e293b' } }
+                    },
+                    plugins: { legend: { labels: { color: '#f3f4f6' } } }
+                }
+            });
+
+            const totalFuelCost = appState.fuelLogs.reduce((a, b) => a + (b.cost || 0), 0);
+            const totalMaintCost = appState.maintenanceLogs.reduce((a, b) => a + (b.cost || 0), 0);
+
+            const ctxExp = document.getElementById('expensesCategoryChart').getContext('2d');
+            if(expenseChartInstance) expenseChartInstance.destroy();
+
+            expenseChartInstance = new Chart(ctxExp, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Combustible ($)', 'Mantenimiento ($)'],
+                    datasets: [{
+                        data: [totalFuelCost || 30.30, totalMaintCost || 45.00],
+                        backgroundColor: ['#f59e0b', '#ea580c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 11 } } } }
+                }
+            });
+        }
+
+        function renderApp() {
+            document.getElementById('bikeName').innerText = appState.bikeProfile.name;
+            document.getElementById('bikePlate').innerText = appState.bikeProfile.plate;
+            document.getElementById('bikeSubDetails').innerText = `Año ${appState.bikeProfile.year} • ${appState.bikeProfile.cc} cc`;
+            document.getElementById('headerOdoText').innerText = `${appState.bikeProfile.odometer.toLocaleString()} km`;
+
+            const oilComp = appState.components.find(c => c.id === 'aceite');
+            if(oilComp) {
+                const rem = oilComp.interval - (appState.bikeProfile.odometer - oilComp.lastKm);
+                document.getElementById('oilKmRemaining').innerText = rem > 0 ? `${rem} km` : 'Revisar Ya';
+            }
+
+            renderBlueprintPanel();
+            renderComponentsGrid();
+            renderMaintenanceTable();
+            renderDocuments();
+            renderFuelSection();
+            renderChecklist();
+            checkNotificationPermission();
+            updateTipBanner();
+            updateTrialUI();
+        }
+
+        function renderComponentsGrid() {
+            const container = document.getElementById('componentsGrid');
+            container.innerHTML = '';
+            appState.components.forEach(comp => {
+                const elapsed = appState.bikeProfile.odometer - comp.lastKm;
+                const percent = comp.interval > 0 ? Math.min(100, Math.max(0, Math.round((elapsed / comp.interval) * 100))) : 0;
+                container.innerHTML += `
+                    <div class="bg-cardbg border border-cardborder rounded-xl p-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-sm">${comp.name}</span>
+                            <span class="text-xs font-mono font-bold text-brand-500">${percent}%</span>
+                        </div>
+                        <div class="w-full bg-gray-900 rounded-full h-1.5">
+                            <div class="bg-brand-500 h-1.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderMaintenanceTable() {
+            const tbody = document.getElementById('maintenanceTableBody');
+            tbody.innerHTML = '';
+            if(appState.maintenanceLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500 text-xs">No hay registros de mantenimiento almacenados.</td></tr>`;
+                return;
+            }
+            appState.maintenanceLogs.forEach(log => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-darkbg/40">
+                        <td class="py-3 px-4 font-mono">${log.date}</td>
+                        <td class="py-3 px-4 font-bold text-white">${log.type}</td>
+                        <td class="py-3 px-4 font-mono">${log.km.toLocaleString()} km</td>
+                        <td class="py-3 px-4 font-mono text-emerald-400">$${parseFloat(log.cost).toFixed(2)}</td>
+                        <td class="py-3 px-4 text-gray-400">${log.notes || '-'}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="deleteLog(${log.id})" class="text-gray-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderDocuments() {
+            const grid = document.getElementById('documentsGrid');
+            grid.innerHTML = '';
+            Object.keys(appState.documents).forEach(key => {
+                grid.innerHTML += `
+                    <div class="bg-cardbg border border-cardborder rounded-2xl p-4 space-y-2">
+                        <span class="text-xs font-mono uppercase text-gray-400">${key}</span>
+                        <h4 class="text-sm font-bold text-white">${appState.documents[key]}</h4>
+                    </div>
+                `;
+            });
+        }
+
+        function renderFuelSection() {
+            const tbody = document.getElementById('fuelTableBody');
+            tbody.innerHTML = '';
+            if(appState.fuelLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-gray-500 text-xs">No hay registros de tanqueo almacenados.</td></tr>`;
+                return;
+            }
+            const sorted = [...appState.fuelLogs].sort((a,b) => b.km - a.km);
+
+            sorted.forEach((log, idx) => {
+                let eff = "--";
+                if(idx < sorted.length - 1) {
+                    const prev = sorted[idx + 1];
+                    const dist = log.km - prev.km;
+                    if(dist > 0 && log.amount > 0) eff = `${(dist / log.amount).toFixed(1)} km/gal`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-darkbg/40">
+                        <td class="py-3 px-4 font-mono">${log.date}</td>
+                        <td class="py-3 px-4 font-mono text-white">${log.km.toLocaleString()} km</td>
+                        <td class="py-3 px-4">${log.amount} gal</td>
+                        <td class="py-3 px-4 font-mono text-amber-400">$${parseFloat(log.cost).toFixed(2)}</td>
+                        <td class="py-3 px-4 font-mono text-brand-accent">${eff}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="deleteFuelLog(${log.id})" class="text-gray-500 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklistItems');
+            container.innerHTML = '';
+            let count = 0;
+            appState.checklist.forEach(item => {
+                if(item.checked) count++;
+                container.innerHTML += `
+                    <label onclick="toggleChecklist(${item.id})" class="flex items-start space-x-3 p-4 rounded-xl border transition cursor-pointer ${item.checked ? 'bg-emerald-500/10 border-emerald-500/30 text-white' : 'bg-gray-900/40 border-cardborder text-gray-400'}">
+                        <div class="mt-0.5 w-5 h-5 rounded border flex items-center justify-center ${item.checked ? 'bg-emerald-500 border-emerald-500 text-gray-950' : 'border-gray-600'}">
+                            ${item.checked ? '<i class="fa-solid fa-check text-xs font-bold"></i>' : ''}
+                        </div>
+                        <span class="text-xs sm:text-sm font-medium select-none">${item.label}</span>
+                    </label>
+                `;
+            });
+            document.getElementById('checklistProgress').innerText = `${count} / ${appState.checklist.length} Verificados`;
+        }
+
+        function toggleChecklist(id) {
+            if (!trackUserMove()) return;
+            const item = appState.checklist.find(i => i.id === id);
+            if(item) { item.checked = !item.checked; saveState(); }
+        }
+        function resetChecklist() { 
+            if (!trackUserMove()) return;
+            appState.checklist.forEach(i => i.checked = false); saveState(); 
+        }
+
+        // Modals Operations with move tracking
+        function openOdometerModal() { document.getElementById('modalOdometerInput').value = appState.bikeProfile.odometer; document.getElementById('odometerModal').classList.remove('hidden'); }
+        function closeOdometerModal() { document.getElementById('odometerModal').classList.add('hidden'); }
+        function saveOdometer(e) { 
+            e.preventDefault(); 
+            if (!trackUserMove()) { closeOdometerModal(); return; }
+            appState.bikeProfile.odometer = parseInt(document.getElementById('modalOdometerInput').value) || 0; 
+            saveState(); 
+            closeOdometerModal(); 
+        }
+
+        function openBikeEditModal() { 
+            document.getElementById('editBrandModel').value = appState.bikeProfile.name;
+            document.getElementById('editPlate').value = appState.bikeProfile.plate;
+            document.getElementById('editYear').value = appState.bikeProfile.year;
+            document.getElementById('editCc').value = appState.bikeProfile.cc;
+            document.getElementById('bikeEditModal').classList.remove('hidden'); 
+        }
+        function closeBikeEditModal() { document.getElementById('bikeEditModal').classList.add('hidden'); }
+        function saveBikeProfile(e) {
+            e.preventDefault();
+            if (!trackUserMove()) { closeBikeEditModal(); return; }
+            appState.bikeProfile.name = document.getElementById('editBrandModel').value;
+            appState.bikeProfile.plate = document.getElementById('editPlate').value;
+            appState.bikeProfile.year = document.getElementById('editYear').value;
+            appState.bikeProfile.cc = parseInt(document.getElementById('editCc').value) || 0;
+            saveState();
+            closeBikeEditModal();
+        }
+
+        function openServiceModal() { document.getElementById('serviceModal').classList.remove('hidden'); }
+        function closeServiceModal() { document.getElementById('serviceModal').classList.add('hidden'); }
+        function saveServiceEntry(e) {
+            e.preventDefault();
+            if (!trackUserMove()) { closeServiceModal(); return; }
+            appState.maintenanceLogs.unshift({
+                id: Date.now(),
+                type: document.getElementById('serviceType').value,
+                date: document.getElementById('serviceDate').value,
+                km: parseInt(document.getElementById('serviceKm').value) || 0,
+                cost: parseFloat(document.getElementById('serviceCost').value) || 0,
+                notes: document.getElementById('serviceNotes').value
+            });
+            saveState();
+            closeServiceModal();
+        }
+
+        function saveFuelEntry(e) {
+            e.preventDefault();
+            if (!trackUserMove()) return;
+            const km = parseInt(document.getElementById('fuelKm').value) || 0;
+            appState.fuelLogs.push({
+                id: Date.now(),
+                date: document.getElementById('fuelDate').value,
+                km: km,
+                amount: parseFloat(document.getElementById('fuelAmount').value) || 0,
+                cost: parseFloat(document.getElementById('fuelCost').value) || 0
+            });
+            if (km > appState.bikeProfile.odometer) appState.bikeProfile.odometer = km;
+            saveState();
+        }
+
+        function openDocModal() { document.getElementById('docModal').classList.remove('hidden'); }
+        function closeDocModal() { document.getElementById('docModal').classList.add('hidden'); }
+        function saveDocEntry(e) {
+            e.preventDefault();
+            if (!trackUserMove()) { closeDocModal(); return; }
+            appState.documents[document.getElementById('docType').value] = document.getElementById('docExpDate').value;
+            saveState();
+            closeDocModal();
+        }
+
+        function deleteLog(id) { 
+            if (!trackUserMove()) return;
+            appState.maintenanceLogs = appState.maintenanceLogs.filter(l => l.id !== id); saveState(); 
+        }
+        function deleteFuelLog(id) { 
+            if (!trackUserMove()) return;
+            appState.fuelLogs = appState.fuelLogs.filter(f => f.id !== id); saveState(); 
+        }
+
+        setInterval(nextTip, 8000);
+
+        window.onload = function() { renderApp(); };
+    </script>
+</body>
+</html>
